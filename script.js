@@ -27,6 +27,9 @@
   // SHA-256 digest of credential pair (normalized case ID + "|" + normalized code)
   const TARGET_CREDENTIAL_HASH = "1c6e701b949a0256ae02e1d87f60cd93fe0c808a5fa6807e4d9438534500416d";
 
+  // SHA-256 digest of Round 1 Reconnaissance passphrase
+  const TARGET_ROUND1_HASH = "7374a2beeea3a0eca783d2dceb13febbd4c9bb702fe50ac1165c97b8cac05907";
+
   // SHA-256 digest of organizer override passphrase (default: ghost-protocol-2026)
   const ORGANIZER_OVERRIDE_HASH = "db92f80fc751eebc031eec7d915b7b7d25bc26c3d4831669dec5dc165838cef0";
 
@@ -519,60 +522,109 @@
   }
 
   // ==========================================================================
-  // 7. SECTION 2: ROUND 1 — RECONNAISSANCE CONTROLLER & API VALIDATION
+  // 7. SECTION 2: ROUND 1 — RECONNAISSANCE CONTROLLER & HYBRID AUTHENTICATION
   // ==========================================================================
+  const STORAGE_KEY_TEAMS = 'bo_r1_teams_progress';
+
   let activeTeamId = 'team-alpha';
   try {
     const savedTeam = localStorage.getItem('r1_active_team');
     if (savedTeam) activeTeamId = savedTeam;
   } catch (e) {}
 
-  async function loadRound1Status() {
+  function getLocalTeamsData() {
     try {
-      const res = await fetch(`/api/round1/status?teamId=${encodeURIComponent(activeTeamId)}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      
-      const errBanner = document.getElementById('round1ErrorBanner');
-      const succBanner = document.getElementById('round1SuccessBanner');
-      const statusText = document.getElementById('round1StatusText');
-      const statusLed = document.getElementById('round1Led');
-      const proceedBtn = document.getElementById('proceedToRound2Btn');
-      const passwordInput = document.getElementById('round1PasswordInput');
-
-      if (data.completed) {
-        round1Completed = true;
-        if (errBanner) errBanner.classList.add('hidden');
-        if (succBanner) succBanner.classList.remove('hidden');
-        const timeInfo = data.completedAt ? ` [${data.completedAt}]` : '';
-        if (statusText) statusText.textContent = `STATUS: RECONNAISSANCE COMPLETE // PROCEED TO ROUND 2 AUTHORIZED${timeInfo}`;
-        if (statusLed) statusLed.classList.remove('locked');
-        if (proceedBtn) {
-          proceedBtn.removeAttribute('disabled');
-          proceedBtn.classList.remove('locked-btn');
-        }
-        if (passwordInput) {
-          passwordInput.disabled = true;
-          passwordInput.placeholder = 'AUTHENTICATED // ACCESS GRANTED';
-        }
-      } else {
-        round1Completed = false;
-        if (errBanner) errBanner.classList.add('hidden');
-        if (succBanner) succBanner.classList.add('hidden');
-        const attemptsText = data.attempts > 0 ? ` (${data.attempts} ATTEMPTS LOGGED)` : '';
-        if (statusText) statusText.textContent = `STATUS: AWAITING ROUND 1 AUTHENTICATION${attemptsText}`;
-        if (statusLed) statusLed.classList.add('locked');
-        if (proceedBtn) {
-          proceedBtn.setAttribute('disabled', 'true');
-          proceedBtn.classList.add('locked-btn');
-        }
-        if (passwordInput) {
-          passwordInput.disabled = false;
-          passwordInput.placeholder = 'Enter password...';
-        }
+      const raw = localStorage.getItem(STORAGE_KEY_TEAMS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed;
       }
-    } catch (err) {
-      console.warn('Failed to load Round 1 status from backend:', err);
+    } catch (e) {}
+    return {
+      "team-alpha": { teamId: "team-alpha", teamName: "Team Alpha", completed: false, attempts: 0, completedAt: null },
+      "team-beta": { teamId: "team-beta", teamName: "Team Beta", completed: false, attempts: 0, completedAt: null },
+      "team-gamma": { teamId: "team-gamma", teamName: "Team Gamma", completed: false, attempts: 0, completedAt: null }
+    };
+  }
+
+  function saveLocalTeamsData(data) {
+    try {
+      localStorage.setItem(STORAGE_KEY_TEAMS, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  function getActiveTeamRecord() {
+    const teams = getLocalTeamsData();
+    if (!teams[activeTeamId]) {
+      teams[activeTeamId] = {
+        teamId: activeTeamId,
+        teamName: `Team ${activeTeamId.replace('team-', '').toUpperCase()}`,
+        completed: false,
+        attempts: 0,
+        completedAt: null
+      };
+      saveLocalTeamsData(teams);
+    }
+    return teams[activeTeamId];
+  }
+
+  function loadRound1Status() {
+    const team = getActiveTeamRecord();
+
+    const errBanner = document.getElementById('round1ErrorBanner');
+    const succBanner = document.getElementById('round1SuccessBanner');
+    const statusText = document.getElementById('round1StatusText');
+    const statusLed = document.getElementById('round1Led');
+    const proceedBtn = document.getElementById('proceedToRound2Btn');
+    const passwordInput = document.getElementById('round1PasswordInput');
+
+    if (team.completed) {
+      round1Completed = true;
+      if (errBanner) errBanner.classList.add('hidden');
+      if (succBanner) succBanner.classList.remove('hidden');
+      const timeInfo = team.completedAt ? ` [${team.completedAt}]` : '';
+      if (statusText) statusText.textContent = `STATUS: RECONNAISSANCE COMPLETE // PROCEED TO ROUND 2 AUTHORIZED${timeInfo}`;
+      if (statusLed) statusLed.classList.remove('locked');
+      if (proceedBtn) {
+        proceedBtn.removeAttribute('disabled');
+        proceedBtn.classList.remove('locked-btn');
+      }
+      if (passwordInput) {
+        passwordInput.disabled = true;
+        passwordInput.placeholder = 'AUTHENTICATED // ACCESS GRANTED';
+      }
+    } else {
+      round1Completed = false;
+      if (errBanner) errBanner.classList.add('hidden');
+      if (succBanner) succBanner.classList.add('hidden');
+      const attemptsText = (team.attempts && team.attempts > 0) ? ` (${team.attempts} ATTEMPTS LOGGED)` : '';
+      if (statusText) statusText.textContent = `STATUS: AWAITING ROUND 1 AUTHENTICATION${attemptsText}`;
+      if (statusLed) statusLed.classList.add('locked');
+      if (proceedBtn) {
+        proceedBtn.setAttribute('disabled', 'true');
+        proceedBtn.classList.add('locked-btn');
+      }
+      if (passwordInput) {
+        passwordInput.disabled = false;
+        passwordInput.placeholder = 'Enter password...';
+      }
+    }
+
+    // Optional background sync with server if available (never throws or errors)
+    if (window.location.protocol.startsWith('http')) {
+      fetch(`/api/round1/status?teamId=${encodeURIComponent(activeTeamId)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(remote => {
+          if (remote && typeof remote.completed === 'boolean') {
+            const currentTeams = getLocalTeamsData();
+            if (remote.completed && !currentTeams[activeTeamId].completed) {
+              currentTeams[activeTeamId] = Object.assign(currentTeams[activeTeamId] || {}, remote);
+              saveLocalTeamsData(currentTeams);
+              loadRound1Status();
+            }
+          }
+        })
+        .catch(() => {});
     }
   }
 
@@ -590,123 +642,158 @@
       return;
     }
 
-    try {
-      const res = await fetch('/api/round1/verify', {
+    // 1. Client-side cryptographic SHA-256 validation (instant, 100% reliable, zero network failures)
+    const normalized = enteredPassword.trim().toLowerCase();
+    const hash = await computeSha256(normalized);
+    const isCorrect = (hash === TARGET_ROUND1_HASH);
+
+    const teams = getLocalTeamsData();
+    const team = teams[activeTeamId] || { teamId: activeTeamId, teamName: activeTeamId, completed: false, attempts: 0, completedAt: null };
+
+    if (isCorrect) {
+      team.completed = true;
+      if (!team.completedAt) {
+        const now = new Date();
+        const timeStr = String(now.getUTCHours()).padStart(2, '0') + ':' +
+                        String(now.getUTCMinutes()).padStart(2, '0') + ':' +
+                        String(now.getUTCSeconds()).padStart(2, '0') + ' UTC';
+        team.completedAt = timeStr;
+      }
+      teams[activeTeamId] = team;
+      saveLocalTeamsData(teams);
+
+      round1Completed = true;
+      if (errBanner) errBanner.classList.add('hidden');
+      if (succBanner) succBanner.classList.remove('hidden');
+      if (statusText) statusText.textContent = `STATUS: RECONNAISSANCE COMPLETE // PROCEED TO ROUND 2 AUTHORIZED [${team.completedAt}]`;
+      if (statusLed) statusLed.classList.remove('locked');
+      if (proceedBtn) {
+        proceedBtn.removeAttribute('disabled');
+        proceedBtn.classList.remove('locked-btn');
+      }
+      if (passwordInput) {
+        passwordInput.value = '';
+        passwordInput.disabled = true;
+        passwordInput.placeholder = 'AUTHENTICATED // ACCESS GRANTED';
+      }
+      audio.successChime();
+      triggerGlitchSuccessFlash();
+      showToast('ROUND 1 COMPLETE // RECONNAISSANCE SUCCESSFUL', 'success');
+    } else {
+      team.attempts = (team.attempts || 0) + 1;
+      teams[activeTeamId] = team;
+      saveLocalTeamsData(teams);
+
+      round1Completed = false;
+      if (errBanner) errBanner.classList.remove('hidden');
+      if (succBanner) succBanner.classList.add('hidden');
+      if (statusText) {
+        statusText.textContent = `STATUS: INCORRECT ATTEMPT LOGGED (${team.attempts} ATTEMPTS)`;
+      }
+      if (statusLed) statusLed.classList.add('locked');
+      if (proceedBtn) {
+        proceedBtn.setAttribute('disabled', 'true');
+        proceedBtn.classList.add('locked-btn');
+      }
+      audio.errorBuzz();
+      showToast('INCORRECT PASSWORD — TRY AGAIN', 'error');
+      if (passwordInput) {
+        passwordInput.focus();
+        passwordInput.select();
+      }
+    }
+
+    // Optional background sync if backend server is available (never produces user error if server is offline)
+    if (window.location.protocol.startsWith('http')) {
+      fetch('/api/round1/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           teamId: activeTeamId,
           password: enteredPassword
         })
-      });
-
-      const data = await res.json();
-
-      if (data.success && data.completed) {
-        round1Completed = true;
-        if (errBanner) errBanner.classList.add('hidden');
-        if (succBanner) succBanner.classList.remove('hidden');
-        if (statusText) statusText.textContent = 'STATUS: RECONNAISSANCE COMPLETE // PROCEED TO ROUND 2 AUTHORIZED';
-        if (statusLed) statusLed.classList.remove('locked');
-        if (proceedBtn) {
-          proceedBtn.removeAttribute('disabled');
-          proceedBtn.classList.remove('locked-btn');
-        }
-        if (passwordInput) {
-          passwordInput.value = '';
-          passwordInput.disabled = true;
-          passwordInput.placeholder = 'AUTHENTICATED // ACCESS GRANTED';
-        }
-        audio.successChime();
-        triggerGlitchSuccessFlash();
-        showToast('ROUND 1 COMPLETE // RECONNAISSANCE SUCCESSFUL', 'success');
-      } else {
-        round1Completed = false;
-        if (errBanner) errBanner.classList.remove('hidden');
-        if (succBanner) succBanner.classList.add('hidden');
-        if (statusText) {
-          statusText.textContent = `STATUS: INCORRECT ATTEMPT LOGGED (${data.attempts} ATTEMPTS)`;
-        }
-        if (statusLed) statusLed.classList.add('locked');
-        if (proceedBtn) {
-          proceedBtn.setAttribute('disabled', 'true');
-          proceedBtn.classList.add('locked-btn');
-        }
-        audio.errorBuzz();
-        showToast('INCORRECT PASSWORD — TRY AGAIN', 'error');
-        if (passwordInput) {
-          passwordInput.focus();
-          passwordInput.select();
-        }
-      }
-    } catch (err) {
-      console.error('Round 1 verification network error:', err);
-      showToast('NETWORK ERROR: Unable to reach verification server', 'error');
-      audio.errorBuzz();
+      }).catch(() => {});
     }
   }
 
   function initRound1Recon() {
-    // Populate or sync team selector
     const teamSelect = document.getElementById('teamSelect');
     if (teamSelect) {
-      // Fetch available teams list to ensure dropdown matches server state
-      fetch('/api/teams')
-        .then(r => r.json())
-        .then(data => {
-          if (data && data.teams) {
-            teamSelect.innerHTML = '';
-            data.teams.forEach(t => {
-              const opt = document.createElement('option');
-              opt.value = t.teamId;
-              opt.textContent = t.teamName;
-              teamSelect.appendChild(opt);
-            });
-            const newOpt = document.createElement('option');
-            newOpt.value = '__new__';
-            newOpt.textContent = '+ New Team...';
-            teamSelect.appendChild(newOpt);
+      // Ensure local teams are in the dropdown
+      const localTeams = getLocalTeamsData();
+      Object.values(localTeams).forEach(t => {
+        if (!teamSelect.querySelector(`option[value="${t.teamId}"]`)) {
+          const opt = document.createElement('option');
+          opt.value = t.teamId;
+          opt.textContent = t.teamName;
+          teamSelect.insertBefore(opt, teamSelect.querySelector('option[value="__new__"]'));
+        }
+      });
 
-            teamSelect.value = activeTeamId;
-            if (!teamSelect.value && data.teams.length > 0) {
-              teamSelect.value = data.teams[0].teamId;
-              activeTeamId = data.teams[0].teamId;
+      teamSelect.value = activeTeamId;
+      if (!teamSelect.value) {
+        teamSelect.value = 'team-alpha';
+        activeTeamId = 'team-alpha';
+      }
+
+      // Also try fetching teams from server if available
+      if (window.location.protocol.startsWith('http')) {
+        fetch('/api/teams')
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (data && data.teams) {
+              const currentLocal = getLocalTeamsData();
+              data.teams.forEach(t => {
+                if (!currentLocal[t.teamId]) {
+                  currentLocal[t.teamId] = { teamId: t.teamId, teamName: t.teamName, completed: false, attempts: 0, completedAt: null };
+                }
+                if (!teamSelect.querySelector(`option[value="${t.teamId}"]`)) {
+                  const opt = document.createElement('option');
+                  opt.value = t.teamId;
+                  opt.textContent = t.teamName;
+                  teamSelect.insertBefore(opt, teamSelect.querySelector('option[value="__new__"]'));
+                }
+              });
+              saveLocalTeamsData(currentLocal);
             }
-          }
-        })
-        .catch(() => {})
-        .finally(() => {
-          loadRound1Status();
-        });
+          })
+          .catch(() => {});
+      }
 
-      teamSelect.addEventListener('change', async (e) => {
+      teamSelect.addEventListener('change', (e) => {
         const val = e.target.value;
         if (val === '__new__') {
           const newName = prompt('Enter New Team Name (e.g. Team Delta):');
           if (newName && newName.trim()) {
             const cleanId = 'team-' + newName.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
-            try {
-              const res = await fetch('/api/team/create', {
+            const allT = getLocalTeamsData();
+            allT[cleanId] = {
+              teamId: cleanId,
+              teamName: newName.trim(),
+              completed: false,
+              attempts: 0,
+              completedAt: null
+            };
+            saveLocalTeamsData(allT);
+
+            const opt = document.createElement('option');
+            opt.value = cleanId;
+            opt.textContent = newName.trim();
+            teamSelect.insertBefore(opt, teamSelect.querySelector('option[value="__new__"]'));
+            teamSelect.value = cleanId;
+            activeTeamId = cleanId;
+            try { localStorage.setItem('r1_active_team', cleanId); } catch (_) {}
+            showToast(`Switched to ${newName.trim()}`, 'info');
+            loadRound1Status();
+
+            if (window.location.protocol.startsWith('http')) {
+              fetch('/api/team/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ teamId: cleanId, teamName: newName.trim() })
-              });
-              const data = await res.json();
-              if (data.success) {
-                const opt = document.createElement('option');
-                opt.value = cleanId;
-                opt.textContent = data.teamName;
-                teamSelect.insertBefore(opt, teamSelect.querySelector('option[value="__new__"]'));
-                teamSelect.value = cleanId;
-                activeTeamId = cleanId;
-                try { localStorage.setItem('r1_active_team', cleanId); } catch (_) {}
-                showToast(`Switched to ${data.teamName}`, 'info');
-                await loadRound1Status();
-                return;
-              }
-            } catch (err) {
-              console.error(err);
+              }).catch(() => {});
             }
+            return;
           }
           teamSelect.value = activeTeamId;
           return;
@@ -716,10 +803,8 @@
         try { localStorage.setItem('r1_active_team', val); } catch (_) {}
         const selName = teamSelect.options[teamSelect.selectedIndex].text;
         showToast(`Active team: ${selName}`, 'info');
-        await loadRound1Status();
+        loadRound1Status();
       });
-    } else {
-      loadRound1Status();
     }
 
     // Password submission form
@@ -755,6 +840,9 @@
         goToSection(3);
       });
     }
+
+    // Initial status render
+    loadRound1Status();
   }
 
   // ==========================================================================
@@ -1835,15 +1923,28 @@
       const tbody = document.getElementById('adminTeamsTableBody');
       if (!tbody) return;
       try {
-        const res = await fetch('/api/admin/teams');
-        if (!res.ok) return;
-        const data = await res.json();
+        let teamsList = [];
+        if (window.location.protocol.startsWith('http')) {
+          try {
+            const res = await fetch('/api/admin/teams');
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.teams && data.teams.length > 0) {
+                teamsList = data.teams;
+              }
+            }
+          } catch (_) {}
+        }
+        if (!teamsList || teamsList.length === 0) {
+          teamsList = Object.values(getLocalTeamsData());
+        }
+
         tbody.innerHTML = '';
-        if (!data.teams || data.teams.length === 0) {
+        if (!teamsList || teamsList.length === 0) {
           tbody.innerHTML = '<tr><td colspan="5" class="text-dim">No teams registered</td></tr>';
           return;
         }
-        data.teams.forEach(t => {
+        teamsList.forEach(t => {
           const tr = document.createElement('tr');
           const statusHtml = t.completed 
             ? '<span class="text-green" style="font-weight:700">✓ COMPLETED</span>' 
@@ -1863,22 +1964,26 @@
         tbody.querySelectorAll('[data-reset-team-id]').forEach(btn => {
           btn.addEventListener('click', async () => {
             const teamIdToReset = btn.getAttribute('data-reset-team-id');
-            try {
-              const resetRes = await fetch('/api/admin/reset-team', {
+            // Always reset local record
+            const localTeams = getLocalTeamsData();
+            if (localTeams[teamIdToReset]) {
+              localTeams[teamIdToReset].completed = false;
+              localTeams[teamIdToReset].attempts = 0;
+              localTeams[teamIdToReset].completedAt = null;
+              saveLocalTeamsData(localTeams);
+            }
+            // Sync with backend if online
+            if (window.location.protocol.startsWith('http')) {
+              fetch('/api/admin/reset-team', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ teamId: teamIdToReset })
-              });
-              const resetData = await resetRes.json();
-              if (resetData.success) {
-                showToast(`✓ Reset progress for ${teamIdToReset}`, 'info');
-                renderAdminTeamsTelemetry();
-                if (teamIdToReset === activeTeamId) {
-                  loadRound1Status();
-                }
-              }
-            } catch (e) {
-              console.error(e);
+              }).catch(() => {});
+            }
+            showToast(`✓ Reset progress for ${teamIdToReset}`, 'info');
+            renderAdminTeamsTelemetry();
+            if (teamIdToReset === activeTeamId) {
+              loadRound1Status();
             }
           });
         });
