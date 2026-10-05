@@ -234,54 +234,130 @@
   <section id="section-round2" class="view-section">
     <div class="section-wrapper mailbox-layout">
       
-      <!-- Section Header -->
+      <!-- Section Header with Instruction Copy -->
       <div class="section-heading-bar">
         <div>
-          <span class="sub-badge cyan-border">PHASE 02 // THREAT INTELLIGENCE & INBOX FORENSICS</span>
+          <span class="sub-badge cyan-border">PHASE 02 // THREAT INTELLIGENCE &amp; INBOX FORENSICS</span>
           <h2 class="glitch-text" data-text="INTERCEPTED SECURE MAILBOX">INTERCEPTED SECURE MAILBOX</h2>
+          <p class="r2-instruction-copy">Find the legitimate email. Use the credentials inside it to authenticate. You have 3 attempts. Choose carefully.</p>
         </div>
         <div class="mailbox-stat-badges">
-          <span class="stat-pill"><span class="pill-dot"></span> INBOX: <strong id="inboxCount">21</strong> DISPATCHES</span>
-          <span class="stat-pill cyan-border">STATUS: <strong class="text-cyan">ANALYZING SIGNATURES</strong></span>
+          <span class="stat-pill"><span class="pill-dot"></span> STATUS: <strong class="text-cyan">LIVE FORENSIC TRIAGE</strong></span>
         </div>
       </div>
 
-      <!-- Main Two-Pane Email Client -->
-      <div class="mailbox-client-frame">
+      <!-- Main Three-Pane Fixed App Shell -->
+      <div class="mailbox-shell" id="mailboxShell">
         
-        <!-- Left Pane: Email List -->
-        <div class="mailbox-sidebar">
+        <!-- Column 1: Folders Sidebar (220px) -->
+        <aside class="mailbox-folders-sidebar">
+          <div class="folders-top-nav">
+            <div class="folders-title">// DIRECTORIES</div>
+            <nav class="folders-list" aria-label="Mailbox Folders">
+              <button class="folder-btn active" data-folder="inbox" id="folderBtnInbox">
+                <span class="folder-icon">📥</span>
+                <span class="folder-name">Inbox</span>
+                <span class="badge-count" id="countInbox">21</span>
+              </button>
+              <button class="folder-btn" data-folder="shortlist" id="folderBtnShortlist">
+                <span class="folder-icon">🔖</span>
+                <span class="folder-name">Shortlisted</span>
+                <span class="badge-count" id="countShortlist">0</span>
+              </button>
+              <button class="folder-btn" data-folder="trash" id="folderBtnTrash">
+                <span class="folder-icon">🗑</span>
+                <span class="folder-name">Trash</span>
+                <span class="badge-count" id="countTrash">0</span>
+              </button>
+            </nav>
+          </div>
+
+          <!-- Pinned Bottom Panel: SECURE LOGIN -->
+          <div class="secure-login-panel" id="secureLoginPanel">
+            <div class="secure-login-header">
+              <span class="sec-lock-icon">🔒</span> SECURE LOGIN
+            </div>
+            <div class="sec-attempts-row">
+              <span class="attempts-label">ATTEMPTS LEFT:</span>
+              <div class="attempt-pips" id="secAttemptPips">
+                <span class="pip filled"></span>
+                <span class="pip filled"></span>
+                <span class="pip filled"></span>
+              </div>
+            </div>
+            <form id="secLoginForm" class="sec-login-form" autocomplete="off">
+              <div class="sec-input-group">
+                <label for="secCaseIdInput" class="sec-label">Security Case ID</label>
+                <input type="text" id="secCaseIdInput" class="sec-input" placeholder="e.g. CYB-2026-ALPHA" autocomplete="off" spellcheck="false">
+              </div>
+              <div class="sec-input-group">
+                <label for="secCodeInput" class="sec-label">Verification Code</label>
+                <input type="text" id="secCodeInput" class="sec-input" placeholder="e.g. 482-917" autocomplete="off" spellcheck="false">
+              </div>
+              <button type="submit" id="secVerifyBtn" class="cyber-button primary-btn w-full">VERIFY</button>
+            </form>
+            <div id="secFeedback" class="sec-feedback" aria-live="polite"></div>
+          </div>
+        </aside>
+
+        <!-- Column 2: Email List (340px) -->
+        <section class="mailbox-list-pane" aria-label="Transmission Spool">
           <div class="sidebar-header">
-            <div class="folder-title">
-              <span class="folder-icon">📁</span> INCOMING SPOOL <span class="badge-count" id="unreadBadge">21</span>
+            <div class="folder-title" id="currentFolderTitle">
+              <span class="folder-icon">📥</span> INBOX SPOOL
             </div>
             <div class="search-box">
-              <input type="text" id="mailboxSearchInput" placeholder="Filter emails..." aria-label="Filter emails">
+              <input type="text" id="mailboxSearchInput" placeholder="Filter transmissions..." aria-label="Filter emails">
             </div>
           </div>
 
           <div class="email-list custom-scroll" id="emailListContainer">
             <!-- Dynamically populated from shuffled emails array -->
           </div>
-        </div>
 
-        <!-- Right Pane: Reading View -->
-        <div class="mailbox-reading-pane" id="readingPane">
+          <!-- Empty folder state -->
+          <div id="emailListEmptyState" class="empty-list-state hidden">
+            <div class="empty-list-icon">📂</div>
+            <div class="empty-list-text" id="emptyListText">No transmissions in this folder.</div>
+          </div>
+        </section>
+
+        <!-- Column 3: Reading Pane (1fr) -->
+        <main class="mailbox-reading-pane custom-scroll" id="readingPane" aria-label="Reading Pane">
           
+          <!-- Mobile Back Button (drill-down on screens <= 900px) -->
+          <button class="mobile-back-btn" id="mobileBackBtn">
+            ← Back to Spool
+          </button>
+
           <!-- Default Empty Selection State -->
           <div class="empty-inbox-prompt" id="emptyInboxPrompt">
             <div class="empty-icon">📨</div>
             <div class="empty-title">NO DISPATCH SELECTED</div>
-            <div class="empty-subtitle">Select an intercepted transmission from the spool on the left to inspect cryptographic headers, sender address, and body content.</div>
-            <div class="empty-hint text-cyan">Hint: Exactly 1 email is legitimate. 20 are adversary phishing clones.</div>
+            <div class="empty-subtitle">Select an intercepted transmission from the list to inspect cryptographic headers, security metadata, and credential payloads.</div>
+            <div class="empty-hint text-cyan">Triage transmissions into Shortlisted or Trash. Authenticate using the Secure Login panel.</div>
           </div>
 
-          <!-- Active Email View (Hidden until an email is clicked) -->
+          <!-- Active Email View Container (starts at the TOP) -->
           <div class="email-view-container hidden" id="emailViewContainer">
             
-            <!-- Email Header Meta Card -->
+            <!-- Email Header Meta Card with Reader Triage Toolbar -->
             <div class="email-view-header">
-              <div class="email-subject-line" id="viewSubject">Subject Line Placeholder</div>
+              <div class="email-view-toolbar">
+                <div class="email-subject-line" id="viewSubject">Subject Line Placeholder</div>
+                <!-- Triage Toolbar Actions -->
+                <div class="reader-triage-actions" id="readerTriageActions">
+                  <button id="readerShortlistBtn" class="cyber-button sm triage-action-btn" title="Likely legitimate">
+                    <span class="icon">🔖</span> Shortlist
+                  </button>
+                  <button id="readerTrashBtn" class="cyber-button sm triage-action-btn" title="Likely phishing">
+                    <span class="icon">🗑</span> Trash
+                  </button>
+                  <button id="readerRestoreBtn" class="cyber-button sm triage-action-btn hidden" title="Restore to Inbox">
+                    <span class="icon">↩</span> Restore to Inbox
+                  </button>
+                </div>
+              </div>
               
               <div class="email-meta-rows">
                 <div class="meta-row">
@@ -304,48 +380,43 @@
             </div>
 
             <!-- Email Body Content View -->
-            <div class="email-body-scroll custom-scroll">
+            <div class="email-body-content">
               <div class="email-body-text" id="viewBody">
                 <!-- Body content populated by JS -->
               </div>
             </div>
 
-            <!-- Email Action Toolbar -->
-            <div class="email-action-bar">
-              <div class="action-info">
-                <span class="info-label">VERIFICATION ACTION:</span>
-                <span class="info-desc">Verify sender cryptographic identity against the central authority database.</span>
-              </div>
-              <div class="action-buttons">
-                <button class="cyber-button success-btn" id="markLegitimateBtn">
-                  <span class="btn-bracket">[✓]</span>
-                  <span class="btn-text">MARK AS LEGITIMATE</span>
-                  <span class="btn-bracket"></span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Correct Answer Typewriter Reveal Card (Hidden until legitimate email is marked) -->
-            <div class="case-id-reveal-card hidden" id="caseIdRevealCard">
-              <div class="reveal-header">
-                <span class="pulse-dot green"></span>
-                <span class="reveal-title text-green">AUTHENTICATION SUCCESSFUL // VERIFIED ORIGIN</span>
-              </div>
-              <div class="reveal-body">
-                <div class="terminal-typewriter-text" id="typewriterCaseId"></div>
-              </div>
-              <div class="reveal-footer">
-                <button class="cyber-button primary-btn" id="proceedToRound3Btn">
-                  <span class="btn-bracket">[</span>
-                  <span class="btn-text">PROCEED TO ROUND 3: PASSWORD TERMINAL >></span>
-                  <span class="btn-bracket">]</span>
-                  <span class="btn-glow"></span>
-                </button>
-              </div>
-            </div>
-
           </div>
 
+          <!-- Success Reveal Card (Revealed upon valid credential authentication) -->
+          <div class="case-id-reveal-card hidden" id="caseIdRevealCard">
+            <div class="reveal-header">
+              <span class="pulse-dot green"></span>
+              <span class="reveal-title text-green">AUTHENTICATION SUCCESSFUL // CREDENTIALS VERIFIED</span>
+            </div>
+            <div class="reveal-body">
+              <div class="terminal-typewriter-text" id="typewriterCaseId">ACCESS GRANTED — GATEWAY DECRYPTED</div>
+            </div>
+            <div class="reveal-footer">
+              <button class="cyber-button primary-btn" id="proceedToRound3Btn">
+                <span class="btn-bracket">[</span>
+                <span class="btn-text">PROCEED TO ROUND 3: PASSWORD TERMINAL >></span>
+                <span class="btn-bracket">]</span>
+                <span class="btn-glow"></span>
+              </button>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Lockout Overlay (Pinned over entire shell when attempts === 0) -->
+        <div id="mailboxLockoutOverlay" class="mailbox-lockout-overlay hidden">
+          <div class="lockout-modal-card">
+            <div class="lockout-alarm-icon">🚨</div>
+            <h2 class="glitch-text text-red" data-text="SECURITY LOCKOUT">SECURITY LOCKOUT</h2>
+            <div class="lockout-subtitle">ACCESS DENIED. Call an organizer.</div>
+            <p class="lockout-desc">Authentication attempts exhausted (0/3). This workstation has been isolated by central security protocols.</p>
+          </div>
         </div>
 
       </div>
@@ -746,50 +817,47 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
   </div>
 
   <!-- ========================================================================= -->
-  <!-- HIDDEN ADMIN TROUBLESHOOTING PANEL (Ctrl+Shift+A)                         -->
+  <!-- HIDDEN ORGANIZER OVERRIDE CONSOLE (Ctrl+Shift+A)                          -->
   <!-- ========================================================================= -->
-  <div class="admin-panel-overlay hidden" id="adminPanel" role="dialog" aria-modal="true" aria-label="Organizer Debug Console">
+  <div class="admin-panel-overlay hidden" id="adminPanel" role="dialog" aria-modal="true" aria-label="Organizer Override Console">
     <div class="admin-panel-card">
       <div class="admin-header">
         <div class="admin-title">
-          <span class="admin-lock">🔒</span> ORGANIZER TROUBLESHOOTING HUD
+          <span class="admin-lock">🔒</span> ORGANIZER OVERRIDE CONSOLE
         </div>
         <button class="admin-close-btn" id="adminCloseBtn" title="Close Admin Panel">&times;</button>
       </div>
 
       <div class="admin-body">
-        <div class="admin-warning-note">
-          <strong class="text-red">CONFIDENTIAL ORGANIZER CONSOLE:</strong> Plaintext answers for emergency troubleshooting and stage validation during the competition.
+        <!-- Locked View: Passphrase Prompt -->
+        <div id="adminPassphraseView" class="admin-auth-view">
+          <p class="admin-prompt-text text-cyan">ENTER ORGANIZER OVERRIDE PASSPHRASE:</p>
+          <form id="adminAuthForm" class="admin-auth-form" autocomplete="off">
+            <input type="password" id="adminPassphraseInput" class="terminal-input admin-input" placeholder="Passphrase..." autocomplete="off">
+            <button type="submit" class="cyber-button primary-btn sm">UNLOCK CONSOLE</button>
+          </form>
+          <div id="adminAuthFeedback" class="admin-auth-feedback text-red"></div>
         </div>
 
-        <div class="admin-answers-table">
-          <div class="admin-answer-row">
-            <span class="row-label">ROUND 2 (LEGIT SENDER):</span>
-            <code class="row-val text-green" id="adminR2Answer">Loading...</code>
+        <!-- Unlocked View: Action Controls (No Answers Stored or Displayed) -->
+        <div id="adminUnlockedView" class="admin-unlocked-view hidden">
+          <div class="admin-status-text text-green">✓ OVERRIDE AUTHORIZED // ROOT PRIVILEGES</div>
+          <div class="admin-actions-grid">
+            <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET ATTEMPTS (TO 3)</button>
+            <button class="cyber-button sm" id="adminResetR2Btn">RESET ENTIRE ROUND 2 (ATTEMPTS + FOLDERS)</button>
+            <button class="cyber-button primary-btn sm" id="adminForceUnlockR3Btn">FORCE-UNLOCK ROUND 3</button>
           </div>
-          <div class="admin-answer-row">
-            <span class="row-label">ROUND 2 (CASE ID):</span>
-            <code class="row-val text-cyan">CYB-2026-ALPHA</code>
-          </div>
-          <div class="admin-answer-row">
-            <span class="row-label">ROUND 3 (PASSWORD):</span>
-            <code class="row-val text-green" id="adminR3Answer">Loading...</code>
-          </div>
-          <div class="admin-answer-row">
-            <span class="row-label">ROUND 4 (AI PHRASE):</span>
-            <code class="row-val text-cyan" id="adminR4Answer">Loading...</code>
-          </div>
-        </div>
 
-        <div class="admin-jump-section">
-          <div class="jump-title">QUICK STAGE NAVIGATOR:</div>
-          <div class="jump-buttons">
-            <button class="cyber-button sm" data-jump="1">00: BOOT</button>
-            <button class="cyber-button sm" data-jump="2">01: DOSSIER</button>
-            <button class="cyber-button sm" data-jump="3">02: MAILBOX</button>
-            <button class="cyber-button sm" data-jump="4">03: TERMINAL</button>
-            <button class="cyber-button sm" data-jump="5">04: AI ROUND</button>
-            <button class="cyber-button sm" data-jump="victory">05: VICTORY</button>
+          <div class="admin-jump-section">
+            <div class="jump-title">QUICK STAGE NAVIGATOR:</div>
+            <div class="jump-buttons">
+              <button class="cyber-button sm" data-jump="1">00: BOOT</button>
+              <button class="cyber-button sm" data-jump="2">01: DOSSIER</button>
+              <button class="cyber-button sm" data-jump="3">02: MAILBOX</button>
+              <button class="cyber-button sm" data-jump="4">03: TERMINAL</button>
+              <button class="cyber-button sm" data-jump="5">04: AI ROUND</button>
+              <button class="cyber-button sm" data-jump="victory">05: VICTORY</button>
+            </div>
           </div>
         </div>
 

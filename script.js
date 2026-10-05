@@ -20,21 +20,21 @@
   // ==========================================================================
   // 1. CRYPTOGRAPHIC PRECOMPUTED HASHES (Zero Plaintext Secrets in Source)
   // ==========================================================================
-  // SHA-256 digest of legitimate sender address (runtime hashed & validated)
-  const TARGET_EMAIL_HASH = "fbf7e34d439e6247a909cc5461bca37a8a530d2d2f73cbf5b2979a0c291ac8f2";
-  
-  // SHA-256 digest of vault authorization key
+  const MAX_ATTEMPTS = 3;
+  const STORAGE_KEY_ATTEMPTS = 'bo_r2_attempts';
+  const STORAGE_KEY_FOLDERS = 'bo_r2_folders';
+
+  // SHA-256 digest of credential pair (normalized case ID + "|" + normalized code)
+  const TARGET_CREDENTIAL_HASH = "1c6e701b949a0256ae02e1d87f60cd93fe0c808a5fa6807e4d9438534500416d";
+
+  // SHA-256 digest of organizer override passphrase (default: ghost-protocol-2026)
+  const ORGANIZER_OVERRIDE_HASH = "db92f80fc751eebc031eec7d915b7b7d25bc26c3d4831669dec5dc165838cef0";
+
+  // SHA-256 digest of vault authorization key (Round 3)
   const TARGET_PASSWORD_HASH = "c1d9829aaf6b5df9e58bf630b6bd4482d602ef51519bcd082349c58bad3f108a";
   
-  // SHA-256 digest of AI directive extraction phrase
+  // SHA-256 digest of AI directive extraction phrase (Round 4)
   const TARGET_AI_PHRASE_HASH = "f7c113855f51657799b35ffc99f6873663829f5c210f5d45342a6784afb9393a";
-
-  // Obfuscated administrative answers for organizer troubleshooting only
-  const _ADM_BLOBS = {
-    r2: "YWNjb3VudC1zZWN1cml0eUBtaWNyb3NvZnQuY29t",
-    r3: "Q1kyMDI2WCE=",
-    r4: "VkFVTFQtRlJBR01FTlQtN1g="
-  };
 
   // Pure JavaScript SHA-256 implementation (Fallback for non-secure contexts / file://)
   function jsSha256(ascii) {
@@ -224,7 +224,7 @@
   // ==========================================================================
   // 3. TOAST NOTIFICATION UTILITY
   // ==========================================================================
-  function showToast(message, type = 'info', duration = 3500) {
+  function showToast(message, type = 'info', duration = 3500, onUndo = null) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
 
@@ -235,8 +235,24 @@
     if (type === 'error') icon = '⚠';
     if (type === 'success') icon = '✓';
 
-    toast.innerHTML = `<span class="toast-icon">${icon}</span> <span class="toast-msg">${message}</span>`;
+    let undoHtml = '';
+    if (typeof onUndo === 'function') {
+      undoHtml = `<button class="toast-undo-btn" id="toastUndoBtn">UNDO</button>`;
+    }
+
+    toast.innerHTML = `<span class="toast-icon">${icon}</span> <span class="toast-msg">${message}</span>${undoHtml}`;
     container.appendChild(toast);
+
+    if (typeof onUndo === 'function') {
+      const undoBtn = toast.querySelector('#toastUndoBtn');
+      if (undoBtn) {
+        undoBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          onUndo();
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        });
+      }
+    }
 
     if (type === 'error') {
       audio.errorBuzz();
@@ -347,10 +363,22 @@
     // Update section visibility
     Object.keys(sections).forEach(key => {
       const sec = sections[key];
-      if (parseInt(key) === stageNum) {
+      const stageKey = parseInt(key, 10);
+      if (stageKey === stageNum) {
         sec.classList.add('active');
         if (window.gsap) {
-          gsap.fromTo(sec, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+          gsap.set(sec, { clearProps: 'all' });
+          gsap.fromTo(sec, { opacity: 0, y: 12 }, { 
+            opacity: 1, 
+            y: 0, 
+            duration: 0.35, 
+            ease: 'power2.out',
+            onComplete: () => {
+              if (stageKey === 3) {
+                gsap.set(sec, { clearProps: 'transform' });
+              }
+            }
+          });
         }
         // Trigger glitch entrance flicker on headings
         const headings = sec.querySelectorAll('.glitch-text');
@@ -361,8 +389,18 @@
         });
       } else {
         sec.classList.remove('active');
+        if (window.gsap) {
+          gsap.set(sec, { clearProps: 'all' });
+        }
       }
     });
+
+    if (stageNum === 3) {
+      const readingPane = document.getElementById('readingPane');
+      if (readingPane) readingPane.scrollTop = 0;
+      const emailList = document.getElementById('emailListContainer');
+      if (emailList) emailList.scrollTop = 0;
+    }
 
     // Update HUD round tracker
     const steps = document.querySelectorAll('.tracker-step');
@@ -495,29 +533,155 @@
   // 8. SECTION 3: ROUND 2 — VIRTUAL MAILBOX (PRIORITY INTERACTIVE CLIENT)
   // ==========================================================================
   
-  // Exact 21 emails provided in the specification (loaded verbatim)
+  // Exact 21 emails provided in the specification with appended credentials
   const emails = [
-    {"id":0,"sender_name":"Microsoft Account Team","sender_email":"account-security@microsoft.com","subject":"New sign-in to your Microsoft account","body":"Hello,\n\nWe detected a new sign-in to your Microsoft account from a Windows device in Noida, India on October 1, 2026. If this was you, no further action is needed.\n\nIf you don't recognize this activity, we recommend reviewing your recent sign-in activity and updating your password from your account security settings.\n\nSecurity Case ID: CYB-2026-ALPHA\n\nThank you,\nMicrosoft Account Team"},
-    {"id":1,"sender_name":"Microsoft Support","sender_email":"security@microsot-support.com","subject":"Your account access will be limited","body":"Dear User,\n\nWe noticed unusual sign-in attempts on your Microsoft account. To avoid limited access, please verify your identity within 24 hours by confirming your details through the secure link below.\n\nRegards,\nMicrosoft Support Team"},
-    {"id":2,"sender_name":"Microsoft Security Team","sender_email":"support@microsoftsecurity.com","subject":"Security Alert: Verify Your Identity","body":"Hello,\n\nOur systems flagged suspicious activity on your account. Please verify your identity immediately to prevent suspension. Click below to confirm your password and security questions.\n\nMicrosoft Security Team"},
-    {"id":3,"sender_name":"Microsoft Alerts","sender_email":"admin@micros0ftalert.com","subject":"Account Alert – Action Required","body":"Hi,\n\nYour account has been flagged for unusual activity. Please log in and confirm your recovery email and phone number to keep your account active. Failure to respond may result in temporary suspension.\n\nMicrosoft Alerts"},
-    {"id":4,"sender_name":"Microsoft Verification Team","sender_email":"security@microsoftverify.com","subject":"Verify Your Account Now","body":"Dear Customer,\n\nAs part of our routine security check, we require you to verify your account information. Please confirm your current password to continue using all Microsoft services without interruption.\n\nMicrosoft Verification Team"},
-    {"id":5,"sender_name":"Microsoft Login Team","sender_email":"notifications@microsoft-login.com","subject":"New Login Detected From Unknown Device","body":"Hello,\n\nWe detected a login from a device we don't recognize. If this wasn't you, click below immediately to secure your account before it gets locked. Note: this notification will expire in 1 hour.\n\nMicrosoft Login Team"},
-    {"id":6,"sender_name":"Microsoft Secure Services","sender_email":"account@microsoftsecure.com","subject":"Important: Your Account Needs Attention","body":"Hi there,\n\nOur security system has detected irregular activity linked to your account. For your safety, please re-enter your login credentials to restore full access.\n\nThank you for your cooperation,\nMicrosoft Secure Services"},
-    {"id":7,"sender_name":"Microsoft 365 Help Desk","sender_email":"support@microsoft365help.com","subject":"Your Microsoft 365 Subscription Needs Verification","body":"Dear User,\n\nThere is an issue with your Microsoft 365 subscription that requires immediate verification of your payment and account details. Please update your information within 48 hours to avoid service interruption.\n\nMicrosoft 365 Help Desk"},
-    {"id":8,"sender_name":"Microsoft Authentication Team","sender_email":"security@microsoft-auth.com","subject":"Authentication Required: Unusual Sign-in Pattern","body":"Hello,\n\nWe've noticed sign-in attempts that don't match your usual pattern. To protect your account, please complete a quick identity confirmation by replying with the one-time code sent to your registered number.\n\nMicrosoft Authentication Team"},
-    {"id":9,"sender_name":"Microsoft Update Team","sender_email":"admin@microsoftupdate.com","subject":"Critical Update Required for Your Account","body":"Hi,\n\nYour account requires a critical security update to remain protected against recent threats. Please confirm your current credentials so we can apply the update without interrupting your access.\n\nMicrosoft Update Team"},
-    {"id":10,"sender_name":"Microsoft Account Notifications","sender_email":"notifications@microsoftaccount.com","subject":"Confirm Recent Activity on Your Account","body":"Dear Customer,\n\nWe noticed recent activity on your account that needs confirmation. Please verify by entering your account password and security PIN on the page linked below within the next few hours.\n\nMicrosoft Account Notifications"},
-    {"id":11,"sender_name":"Microsoft Security","sender_email":"microsoftsecurity123@gmail.com","subject":"URGENT!!! YOUR ACCOUNT WILL BE DELETED","body":"WARNING!!! Your Microsoft account will be PERMANENTLY DELETED in 1 HOUR unless you send your password and date of birth to this email RIGHT NOW. Act fast!!!\n\n- Microsoft Security"},
-    {"id":12,"sender_name":"Microsoft Support Team","sender_email":"microsoftsupport@outlook.com","subject":"Congratulations! You've Won a Free Upgrade","body":"Hello Winner,\n\nYou have been randomly selected to receive a FREE lifetime upgrade to Microsoft 365 Premium! Reply with your login details to claim your prize before it expires today.\n\nMicrosoft Support Team"},
-    {"id":13,"sender_name":"Microsoft Team","sender_email":"microsoft.security@yahoo.com","subject":"your acount has prblem plz fix now","body":"dear costumer your acount have securty prblem. click link and put ur password and card number to fix. do fast or acount close.\n\nthank you microsoft team"},
-    {"id":14,"sender_name":"Microsoft Legal Dept","sender_email":"officialmicrosoft@proton.me","subject":"Official Notice From Microsoft HQ","body":"This is an OFFICIAL message from Microsoft Headquarters. Your account has violated our terms. Pay a $50 verification fee immediately by gift card to avoid legal action. Reply with gift card codes to this email.\n\nMicrosoft Legal Dept."},
-    {"id":15,"sender_name":"Microsoft Help Desk","sender_email":"microsofthelpdesk@gmail.com","subject":"Your Password Expires Today - Click Now","body":"Hi, your password is about to expire TODAY. Click the attached file right now and enter your old and new password to avoid losing access forever. Don't wait, do it now!!!\n\nMicrosoft Help Desk"},
-    {"id":16,"sender_name":"Microsft Team","sender_email":"microsftsecurity@outlook.com","subject":"Acount Secrity Alret","body":"hello we form microsft. your acount has secrity alret. send us your password and otp code now too fix problem before acount get ban forever. reply fast.\n\nmicrosft team"},
-    {"id":17,"sender_name":"Microsoft Admin Team","sender_email":"microsoft_admin_2026@gmail.com","subject":"FINAL WARNING: Suspicious Login From Russia","body":"FINAL WARNING!!! Someone from Russia tried to log into your account 47 times. If you don't confirm your password in the next 10 minutes, your account AND all your files will be deleted forever. Reply NOW.\n\nMicrosoft Admin Team"},
-    {"id":18,"sender_name":"Microsoft Emergency Response","sender_email":"securitymicrosoft@icloud.com","subject":"Your Microsoft Account Is Compromised - Act Immediately","body":"Dear Sir/Madam,\n\nHackers have accessed your account. Download the attached security tool and run it on your computer immediately, then enter your password when prompted to remove the hackers.\n\nMicrosoft Emergency Response"},
-    {"id":19,"sender_name":"Microsoft Rewards Team","sender_email":"microsoftverify123@yahoo.com","subject":"Claim Your Microsoft Reward Points Before They Expire","body":"You have 50,000 unclaimed Microsoft reward points!!! Click here, log in with your email and password on our special rewards page, and claim your gift card before midnight tonight!\n\nMicrosoft Rewards Team"},
-    {"id":20,"sender_name":"Real Microsoft Support","sender_email":"realmicrosoftsupport@mail.com","subject":"This Is Not a Scam - Verify Your Real Account","body":"Hi, we know you might think this is fake but THIS IS 100% REAL. Please send your password, backup email password, and phone PIN to this address so our real support team can verify you are the real account owner.\n\nThank you,\nReal Microsoft Support"}
+    {
+      "id": 0,
+      "sender_name": "Microsoft Account Team",
+      "sender_email": "account-security@microsoft.com",
+      "subject": "New sign-in to your Microsoft account",
+      "body": "Hello,\n\nWe detected a new sign-in to your Microsoft account from a Windows device in Noida, India on October 1, 2026. If this was you, no further action is needed.\n\nIf you don't recognize this activity, we recommend reviewing your recent sign-in activity and updating your password from your account security settings.\n\nSecurity Case ID: CYB-2026-ALPHA\nVerification Code: 482-917\n\nThank you,\nMicrosoft Account Team"
+    },
+    {
+      "id": 1,
+      "sender_name": "Microsoft Support",
+      "sender_email": "security@microsot-support.com",
+      "subject": "Your account access will be limited",
+      "body": "Dear User,\n\nWe noticed unusual sign-in attempts on your Microsoft account. To avoid limited access, please verify your identity within 24 hours by confirming your details through the secure link below.\n\nSecurity Case ID: CYB-2026-BRAVO\nVerification Code: 391-604\n\nRegards,\nMicrosoft Support Team"
+    },
+    {
+      "id": 2,
+      "sender_name": "Microsoft Security Team",
+      "sender_email": "support@microsoftsecurity.com",
+      "subject": "Security Alert: Verify Your Identity",
+      "body": "Hello,\n\nOur systems flagged suspicious activity on your account. Please verify your identity immediately to prevent suspension. Click below to confirm your password and security questions.\n\nSecurity Case ID: CYB-2026-ALPHA\nVerification Code: 482-971\n\nMicrosoft Security Team"
+    },
+    {
+      "id": 3,
+      "sender_name": "Microsoft Alerts",
+      "sender_email": "admin@micros0ftalert.com",
+      "subject": "Account Alert – Action Required",
+      "body": "Hi,\n\nYour account has been flagged for unusual activity. Please log in and confirm your recovery email and phone number to keep your account active. Failure to respond may result in temporary suspension.\n\nSecurity Case ID: CYB-2O26-ALPHA\nVerification Code: 482-917\n\nMicrosoft Alerts"
+    },
+    {
+      "id": 4,
+      "sender_name": "Microsoft Verification Team",
+      "sender_email": "security@microsoftverify.com",
+      "subject": "Verify Your Account Now",
+      "body": "Dear Customer,\n\nAs part of our routine security check, we require you to verify your account information. Please confirm your current password to continue using all Microsoft services without interruption.\n\nSecurity Case ID: CYB-2026-ALPHA\nVerification Code: 428-917\n\nMicrosoft Verification Team"
+    },
+    {
+      "id": 5,
+      "sender_name": "Microsoft Login Team",
+      "sender_email": "notifications@microsoft-login.com",
+      "subject": "New Login Detected From Unknown Device",
+      "body": "Hello,\n\nWe detected a login from a device we don't recognize. If this wasn't you, click below immediately to secure your account before it gets locked. Note: this notification will expire in 1 hour.\n\nSecurity Case ID: CYB-2026-DELTA\nVerification Code: 715-382\n\nMicrosoft Login Team"
+    },
+    {
+      "id": 6,
+      "sender_name": "Microsoft Secure Services",
+      "sender_email": "account@microsoftsecure.com",
+      "subject": "Important: Your Account Needs Attention",
+      "body": "Hi there,\n\nOur security system has detected irregular activity linked to your account. For your safety, please re-enter your login credentials to restore full access.\n\nSecurity Case ID: CYB-2026-ALPHA-1\nVerification Code: 482-917\n\nThank you for your cooperation,\nMicrosoft Secure Services"
+    },
+    {
+      "id": 7,
+      "sender_name": "Microsoft 365 Help Desk",
+      "sender_email": "support@microsoft365help.com",
+      "subject": "Your Microsoft 365 Subscription Needs Verification",
+      "body": "Dear User,\n\nThere is an issue with your Microsoft 365 subscription that requires immediate verification of your payment and account details. Please update your information within 48 hours to avoid service interruption.\n\nSecurity Case ID: CYB-2026-ECHO\nVerification Code: 264-538\n\nMicrosoft 365 Help Desk"
+    },
+    {
+      "id": 8,
+      "sender_name": "Microsoft Authentication Team",
+      "sender_email": "security@microsoft-auth.com",
+      "subject": "Authentication Required: Unusual Sign-in Pattern",
+      "body": "Hello,\n\nWe've noticed sign-in attempts that don't match your usual pattern. To protect your account, please complete a quick identity confirmation by replying with the one-time code sent to your registered number.\n\nSecurity Case ID: CYB-2025-ALPHA\nVerification Code: 482-917\n\nMicrosoft Authentication Team"
+    },
+    {
+      "id": 9,
+      "sender_name": "Microsoft Update Team",
+      "sender_email": "admin@microsoftupdate.com",
+      "subject": "Critical Update Required for Your Account",
+      "body": "Hi,\n\nYour account requires a critical security update to remain protected against recent threats. Please confirm your current credentials so we can apply the update without interrupting your access.\n\nSecurity Case ID: CYB-2026-SIGMA\nVerification Code: 903-216\n\nMicrosoft Update Team"
+    },
+    {
+      "id": 10,
+      "sender_name": "Microsoft Account Notifications",
+      "sender_email": "notifications@microsoftaccount.com",
+      "subject": "Confirm Recent Activity on Your Account",
+      "body": "Dear Customer,\n\nWe noticed recent activity on your account that needs confirmation. Please verify by entering your account password and security PIN on the page linked below within the next few hours.\n\nSecurity Case ID: CYB-2026-OMEGA\nVerification Code: 157-740\n\nMicrosoft Account Notifications"
+    },
+    {
+      "id": 11,
+      "sender_name": "Microsoft Security",
+      "sender_email": "microsoftsecurity123@gmail.com",
+      "subject": "URGENT!!! YOUR ACCOUNT WILL BE DELETED",
+      "body": "WARNING!!! Your Microsoft account will be PERMANENTLY DELETED in 1 HOUR unless you send your password and date of birth to this email RIGHT NOW. Act fast!!!\n\nCase ID: CYB-0000-HACK\nCode: 000-000\n\n- Microsoft Security"
+    },
+    {
+      "id": 12,
+      "sender_name": "Microsoft Support Team",
+      "sender_email": "microsoftsupport@outlook.com",
+      "subject": "Congratulations! You've Won a Free Upgrade",
+      "body": "Hello Winner,\n\nYou have been randomly selected to receive a FREE lifetime upgrade to Microsoft 365 Premium! Reply with your login details to claim your prize before it expires today.\n\nCase ID: FREE-UPGRADE-2026\nCode: 123-456\n\nMicrosoft Support Team"
+    },
+    {
+      "id": 13,
+      "sender_name": "Microsoft Team",
+      "sender_email": "microsoft.security@yahoo.com",
+      "subject": "your acount has prblem plz fix now",
+      "body": "dear costumer your acount have securty prblem. click link and put ur password and card number to fix. do fast or acount close.\n\nCase ID: ACCT-PROBLM-99\nCode: 111-222\n\nthank you microsoft team"
+    },
+    {
+      "id": 14,
+      "sender_name": "Microsoft Legal Dept",
+      "sender_email": "officialmicrosoft@proton.me",
+      "subject": "Official Notice From Microsoft HQ",
+      "body": "This is an OFFICIAL message from Microsoft Headquarters. Your account has violated our terms. Pay a $50 verification fee immediately by gift card to avoid legal action. Reply with gift card codes to this email.\n\nCase ID: HQ-LEGAL-5000\nCode: 777-777\n\nMicrosoft Legal Dept."
+    },
+    {
+      "id": 15,
+      "sender_name": "Microsoft Help Desk",
+      "sender_email": "microsofthelpdesk@gmail.com",
+      "subject": "Your Password Expires Today - Click Now",
+      "body": "Hi, your password is about to expire TODAY. Click the attached file right now and enter your old and new password to avoid losing access forever. Don't wait, do it now!!!\n\nCase ID: EXPIRE-NOW-01\nCode: 999-999\n\nMicrosoft Help Desk"
+    },
+    {
+      "id": 16,
+      "sender_name": "Microsft Team",
+      "sender_email": "microsftsecurity@outlook.com",
+      "subject": "Acount Secrity Alret",
+      "body": "hello we form microsft. your acount has secrity alret. send us your password and otp code now too fix problem before acount get ban forever. reply fast.\n\nCase ID: SECRITY-ALRT-7\nCode: 314-159\n\nmicrosft team"
+    },
+    {
+      "id": 17,
+      "sender_name": "Microsoft Admin Team",
+      "sender_email": "microsoft_admin_2026@gmail.com",
+      "subject": "FINAL WARNING: Suspicious Login From Russia",
+      "body": "FINAL WARNING!!! Someone from Russia tried to log into your account 47 times. If you don't confirm your password in the next 10 minutes, your account AND all your files will be deleted forever. Reply NOW.\n\nCase ID: RUSSIA-HACK-47\nCode: 666-666\n\nMicrosoft Admin Team"
+    },
+    {
+      "id": 18,
+      "sender_name": "Microsoft Emergency Response",
+      "sender_email": "securitymicrosoft@icloud.com",
+      "subject": "Your Microsoft Account Is Compromised - Act Immediately",
+      "body": "Dear Sir/Madam,\n\nHackers have accessed your account. Download the attached security tool and run it on your computer immediately, then enter your password when prompted to remove the hackers.\n\nCase ID: HACKED-URGENT-1\nCode: 404-404\n\nMicrosoft Emergency Response"
+    },
+    {
+      "id": 19,
+      "sender_name": "Microsoft Rewards Team",
+      "sender_email": "microsoftverify123@yahoo.com",
+      "subject": "Claim Your Microsoft Reward Points Before They Expire",
+      "body": "You have 50,000 unclaimed Microsoft reward points!!! Click here, log in with your email and password on our special rewards page, and claim your gift card before midnight tonight!\n\nCase ID: REWARD-50000\nCode: 888-888\n\nMicrosoft Rewards Team"
+    },
+    {
+      "id": 20,
+      "sender_name": "Real Microsoft Support",
+      "sender_email": "realmicrosoftsupport@mail.com",
+      "subject": "This Is Not a Scam - Verify Your Real Account",
+      "body": "Hi, we know you might think this is fake but THIS IS 100% REAL. Please send your password, backup email password, and phone PIN to this address so our real support team can verify you are the real account owner.\n\nCase ID: 100-PCT-REAL\nCode: 101-010\n\nThank you,\nReal Microsoft Support"
+    }
   ];
 
   // Fisher-Yates shuffle implementation
@@ -532,15 +696,147 @@
 
   let shuffledEmails = [];
   let selectedEmail = null;
-  let round2Solved = false;
-  let verifiedLegitEmailId = null;
+  let currentFolder = 'inbox'; // 'inbox' | 'shortlist' | 'trash'
   const readEmailIds = new Set();
-  const flaggedPhishIds = new Set();
 
+  const timestamps = [
+    '02:47 AM', '02:41 AM', '02:35 AM', '02:28 AM', '02:19 AM',
+    '02:11 AM', '01:58 AM', '01:45 AM', '01:32 AM', '01:20 AM',
+    '01:05 AM', '12:54 AM', '12:40 AM', '12:22 AM', '12:05 AM',
+    'Yesterday', 'Yesterday', 'Oct 1', 'Oct 1', 'Sep 30', 'Sep 30'
+  ];
+
+  // Folder state in sessionStorage
+  function getFolderState() {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY_FOLDERS);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveFolderState(state) {
+    try {
+      sessionStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(state));
+    } catch (e) {}
+  }
+
+  function getEmailFolder(emailId) {
+    const state = getFolderState();
+    return state[emailId] || 'inbox';
+  }
+
+  function setEmailFolder(emailId, targetFolder) {
+    const state = getFolderState();
+    state[emailId] = targetFolder;
+    saveFolderState(state);
+    updateFolderCounts();
+  }
+
+  function updateFolderCounts() {
+    const state = getFolderState();
+    let inboxCount = 0;
+    let shortlistCount = 0;
+    let trashCount = 0;
+
+    emails.forEach(e => {
+      const f = state[e.id] || 'inbox';
+      if (f === 'inbox') inboxCount++;
+      else if (f === 'shortlist') shortlistCount++;
+      else if (f === 'trash') trashCount++;
+    });
+
+    const cInbox = document.getElementById('countInbox');
+    const cShortlist = document.getElementById('countShortlist');
+    const cTrash = document.getElementById('countTrash');
+
+    if (cInbox) cInbox.textContent = inboxCount;
+    if (cShortlist) cShortlist.textContent = shortlistCount;
+    if (cTrash) cTrash.textContent = trashCount;
+  }
+
+  // Attempt Management in localStorage
+  function getAttemptsLeft() {
+    try {
+      const val = localStorage.getItem(STORAGE_KEY_ATTEMPTS);
+      if (val === null) return MAX_ATTEMPTS;
+      const parsed = parseInt(val, 10);
+      return isNaN(parsed) ? MAX_ATTEMPTS : Math.max(0, Math.min(MAX_ATTEMPTS, parsed));
+    } catch (e) {
+      return MAX_ATTEMPTS;
+    }
+  }
+
+  function setAttemptsLeft(num) {
+    const val = Math.max(0, Math.min(MAX_ATTEMPTS, num));
+    try {
+      localStorage.setItem(STORAGE_KEY_ATTEMPTS, val.toString());
+    } catch (e) {}
+    renderAttemptPips(val);
+    checkLockoutState(val);
+    return val;
+  }
+
+  function renderAttemptPips(val) {
+    const pipsContainer = document.getElementById('secAttemptPips');
+    if (!pipsContainer) return;
+    pipsContainer.innerHTML = '';
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      const pip = document.createElement('span');
+      pip.className = 'pip' + (i < val ? ' filled' : '');
+      pipsContainer.appendChild(pip);
+    }
+  }
+
+  function checkLockoutState(attempts) {
+    const overlay = document.getElementById('mailboxLockoutOverlay');
+    if (!overlay) return;
+    if (attempts <= 0) {
+      overlay.classList.remove('hidden');
+      audio.glitchZap();
+    } else {
+      overlay.classList.add('hidden');
+    }
+  }
+
+  // Normalization helper
+  function normalizeCredential(val) {
+    return (val || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
+  // Init Mailbox
   function initMailbox() {
     shuffledEmails = shuffle(emails);
+    updateFolderCounts();
+    renderAttemptPips(getAttemptsLeft());
+    checkLockoutState(getAttemptsLeft());
     renderEmailList();
 
+    // Folder navigation tabs
+    const folderButtons = [
+      { id: 'folderBtnInbox', folder: 'inbox', title: '📥 INBOX SPOOL' },
+      { id: 'folderBtnShortlist', folder: 'shortlist', title: '🔖 SHORTLISTED' },
+      { id: 'folderBtnTrash', folder: 'trash', title: '🗑 TRASH SPOOL' }
+    ];
+
+    folderButtons.forEach(fb => {
+      const btn = document.getElementById(fb.id);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        currentFolder = fb.folder;
+        folderButtons.forEach(b => {
+          const el = document.getElementById(b.id);
+          if (el) el.classList.toggle('active', b.folder === currentFolder);
+        });
+        const titleEl = document.getElementById('currentFolderTitle');
+        if (titleEl) titleEl.innerHTML = fb.title;
+        renderEmailList();
+        audio.keyClick();
+      });
+    });
+
+    // Search filter
     const searchInput = document.getElementById('mailboxSearchInput');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {
@@ -548,11 +844,50 @@
       });
     }
 
-    const markLegitBtn = document.getElementById('markLegitimateBtn');
-    if (markLegitBtn) {
-      markLegitBtn.addEventListener('click', handleMarkLegitimate);
+    // Reader Toolbar Triage Buttons
+    const readerShortlistBtn = document.getElementById('readerShortlistBtn');
+    if (readerShortlistBtn) {
+      readerShortlistBtn.addEventListener('click', () => {
+        if (selectedEmail) triageEmail(selectedEmail.id, 'shortlist');
+      });
     }
 
+    const readerTrashBtn = document.getElementById('readerTrashBtn');
+    if (readerTrashBtn) {
+      readerTrashBtn.addEventListener('click', () => {
+        if (selectedEmail) triageEmail(selectedEmail.id, 'trash');
+      });
+    }
+
+    const readerRestoreBtn = document.getElementById('readerRestoreBtn');
+    if (readerRestoreBtn) {
+      readerRestoreBtn.addEventListener('click', () => {
+        if (selectedEmail) triageEmail(selectedEmail.id, 'inbox');
+      });
+    }
+
+    // Mobile Back Button (drill-down on <= 900px)
+    const mobileBackBtn = document.getElementById('mobileBackBtn');
+    if (mobileBackBtn) {
+      mobileBackBtn.addEventListener('click', () => {
+        const shell = document.getElementById('mailboxShell');
+        if (shell) shell.classList.remove('viewing-email');
+        audio.keyClick();
+      });
+    }
+
+    // Secure Login Form Verification
+    const secForm = document.getElementById('secLoginForm');
+    if (secForm) {
+      secForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const caseId = document.getElementById('secCaseIdInput').value;
+        const code = document.getElementById('secCodeInput').value;
+        await verifyCredentials(caseId, code);
+      });
+    }
+
+    // Proceed to Round 3 Button
     const proceedToR3 = document.getElementById('proceedToRound3Btn');
     if (proceedToR3) {
       proceedToR3.addEventListener('click', () => {
@@ -563,17 +898,15 @@
 
   function renderEmailList(filterText = '') {
     const container = document.getElementById('emailListContainer');
+    const emptyState = document.getElementById('emailListEmptyState');
+    const emptyText = document.getElementById('emptyListText');
     if (!container) return;
     container.innerHTML = '';
 
-    const timestamps = [
-      '02:47 AM', '02:41 AM', '02:35 AM', '02:28 AM', '02:19 AM',
-      '02:11 AM', '01:58 AM', '01:45 AM', '01:32 AM', '01:20 AM',
-      '01:05 AM', '12:54 AM', '12:40 AM', '12:22 AM', '12:05 AM',
-      'Yesterday', 'Yesterday', 'Oct 1', 'Oct 1', 'Sep 30', 'Sep 30'
-    ];
+    const folderEmails = shuffledEmails.filter(e => getEmailFolder(e.id) === currentFolder);
 
-    shuffledEmails.forEach((email, index) => {
+    let matchCount = 0;
+    folderEmails.forEach((email) => {
       if (filterText) {
         const match = email.sender_name.toLowerCase().includes(filterText) ||
                       email.sender_email.toLowerCase().includes(filterText) ||
@@ -582,6 +915,7 @@
         if (!match) return;
       }
 
+      matchCount++;
       const item = document.createElement('div');
       item.className = 'email-item';
       item.setAttribute('data-id', email.id);
@@ -593,15 +927,26 @@
         item.classList.add('active');
       }
 
-      if (flaggedPhishIds.has(email.id)) {
-        item.classList.add('flagged-phish');
-      }
+      const timeStr = timestamps[email.id % timestamps.length];
 
-      if (round2Solved && email.id === verifiedLegitEmailId) {
-        item.classList.add('verified-legit');
+      // Build hover triage action buttons based on current folder
+      let actionButtonsHtml = '';
+      if (currentFolder === 'inbox') {
+        actionButtonsHtml = `
+          <button class="row-triage-btn" data-triage="shortlist" title="Likely legitimate">🔖</button>
+          <button class="row-triage-btn" data-triage="trash" title="Likely phishing">🗑</button>
+        `;
+      } else if (currentFolder === 'shortlist') {
+        actionButtonsHtml = `
+          <button class="row-triage-btn" data-triage="inbox" title="Restore to Inbox">↩</button>
+          <button class="row-triage-btn" data-triage="trash" title="Move to Trash">🗑</button>
+        `;
+      } else if (currentFolder === 'trash') {
+        actionButtonsHtml = `
+          <button class="row-triage-btn" data-triage="inbox" title="Restore to Inbox">↩</button>
+          <button class="row-triage-btn" data-triage="shortlist" title="Move to Shortlisted">🔖</button>
+        `;
       }
-
-      const timeStr = timestamps[index % timestamps.length];
 
       item.innerHTML = `
         <div class="email-item-header">
@@ -610,31 +955,68 @@
         </div>
         <div class="email-item-subject">${escapeHtml(email.subject)}</div>
         <div class="email-item-preview">${escapeHtml(email.sender_email)}</div>
+        <div class="email-item-actions">${actionButtonsHtml}</div>
       `;
 
+      // Item click opens reading view
       item.addEventListener('click', () => {
         openEmail(email, timeStr, item);
+      });
+
+      // Row hover triage buttons click
+      const actionBtns = item.querySelectorAll('.row-triage-btn');
+      actionBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const targetF = btn.getAttribute('data-triage');
+          triageEmail(email.id, targetF, item);
+        });
       });
 
       container.appendChild(item);
     });
 
-    updateUnreadBadge();
+    if (emptyState && emptyText) {
+      if (matchCount === 0) {
+        emptyState.classList.remove('hidden');
+        if (filterText) {
+          emptyText.textContent = 'No matching transmissions found.';
+        } else if (currentFolder === 'inbox') {
+          emptyText.textContent = 'Inbox clear. All items triaged.';
+        } else if (currentFolder === 'shortlist') {
+          emptyText.textContent = 'No transmissions shortlisted yet.';
+        } else if (currentFolder === 'trash') {
+          emptyText.textContent = 'Trash spool is empty.';
+        }
+      } else {
+        emptyState.classList.add('hidden');
+      }
+    }
   }
 
   function openEmail(email, timeStr, itemEl) {
     selectedEmail = email;
     readEmailIds.add(email.id);
 
-    // Update read state visually
-    itemEl.classList.remove('unread');
-    itemEl.classList.add('read');
-    updateUnreadBadge();
+    if (itemEl) {
+      itemEl.classList.remove('unread');
+      itemEl.classList.add('read');
+      const allItems = document.querySelectorAll('.email-item');
+      allItems.forEach(i => i.classList.remove('active'));
+      itemEl.classList.add('active');
+    }
 
-    // Mark active in list
-    const allItems = document.querySelectorAll('.email-item');
-    allItems.forEach(i => i.classList.remove('active'));
-    itemEl.classList.add('active');
+    // Reset reading pane scroll to top immediately
+    const readingPane = document.getElementById('readingPane');
+    if (readingPane) {
+      readingPane.scrollTop = 0;
+    }
+
+    // Drill-down for mobile/narrow screens (<= 900px)
+    const mailboxShell = document.getElementById('mailboxShell');
+    if (mailboxShell) {
+      mailboxShell.classList.add('viewing-email');
+    }
 
     // Populate reading view
     const emptyPrompt = document.getElementById('emptyInboxPrompt');
@@ -653,89 +1035,185 @@
     const dkimBadge = document.getElementById('viewDkimBadge');
     if (email.sender_email.endsWith('@microsoft.com')) {
       spfBadge.textContent = 'SPF: PASS';
-      spfBadge.className = 'sec-badge text-green';
+      spfBadge.className = 'sec-badge spf-badge text-green';
       dkimBadge.textContent = 'DKIM: SIGNED';
-      dkimBadge.className = 'sec-badge text-green';
+      dkimBadge.className = 'sec-badge dkim-badge text-green';
     } else {
       spfBadge.textContent = 'SPF: FAIL / SUSPECT';
-      spfBadge.className = 'sec-badge text-red';
+      spfBadge.className = 'sec-badge spf-badge text-red';
       dkimBadge.textContent = 'DKIM: UNTRUSTED DOMAIN';
-      dkimBadge.className = 'sec-badge text-red';
+      dkimBadge.className = 'sec-badge dkim-badge text-red';
     }
 
-    // Hide or show case ID card based on whether this email was already solved
-    const caseIdCard = document.getElementById('caseIdRevealCard');
-    if (caseIdCard) {
-      if (round2Solved && email.id === verifiedLegitEmailId) {
-        caseIdCard.classList.remove('hidden');
-      } else {
-        caseIdCard.classList.add('hidden');
-      }
-    }
+    // Sync toolbar buttons for current folder
+    const curF = getEmailFolder(email.id);
+    updateReaderToolbar(curF);
 
     audio.keyClick();
   }
 
-  function updateUnreadBadge() {
-    const unreadCount = emails.length - readEmailIds.size;
-    const badge = document.getElementById('unreadBadge');
-    if (badge) {
-      badge.textContent = unreadCount >= 0 ? unreadCount : 0;
+  function updateReaderToolbar(folder) {
+    const shortlistBtn = document.getElementById('readerShortlistBtn');
+    const trashBtn = document.getElementById('readerTrashBtn');
+    const restoreBtn = document.getElementById('readerRestoreBtn');
+
+    if (!shortlistBtn || !trashBtn || !restoreBtn) return;
+
+    if (folder === 'inbox') {
+      shortlistBtn.classList.remove('hidden');
+      trashBtn.classList.remove('hidden');
+      restoreBtn.classList.add('hidden');
+    } else if (folder === 'shortlist') {
+      shortlistBtn.classList.add('hidden');
+      trashBtn.classList.remove('hidden');
+      restoreBtn.classList.remove('hidden');
+    } else if (folder === 'trash') {
+      shortlistBtn.classList.remove('hidden');
+      trashBtn.classList.add('hidden');
+      restoreBtn.classList.remove('hidden');
     }
   }
 
-  async function handleMarkLegitimate() {
-    if (!selectedEmail) return;
+  function triageEmail(emailId, targetFolder, rowEl = null) {
+    const currentF = getEmailFolder(emailId);
+    if (currentF === targetFolder) return;
 
-    // Runtime SHA-256 hash comparison against target hash
-    const inputHash = await computeSha256(selectedEmail.sender_email.trim());
+    function applyMove() {
+      setEmailFolder(emailId, targetFolder);
 
-    if (inputHash === TARGET_EMAIL_HASH) {
-      // Correct legitimate email!
-      round2Solved = true;
-      verifiedLegitEmailId = selectedEmail.id;
+      if (rowEl && rowEl.parentNode) {
+        if (window.gsap) {
+          gsap.to(rowEl, {
+            x: -30,
+            opacity: 0,
+            duration: 0.25,
+            ease: 'power2.in',
+            onComplete: () => {
+              if (rowEl.parentNode) rowEl.parentNode.removeChild(rowEl);
+              // Check if list is empty now
+              const container = document.getElementById('emailListContainer');
+              const emptyState = document.getElementById('emailListEmptyState');
+              const emptyText = document.getElementById('emptyListText');
+              if (container && (!container.children || container.children.length === 0)) {
+                if (emptyState && emptyText) {
+                  emptyState.classList.remove('hidden');
+                  if (currentFolder === 'inbox') emptyText.textContent = 'Inbox clear. All items triaged.';
+                  else if (currentFolder === 'shortlist') emptyText.textContent = 'No transmissions shortlisted yet.';
+                  else if (currentFolder === 'trash') emptyText.textContent = 'Trash spool is empty.';
+                }
+              }
+            }
+          });
+        } else {
+          rowEl.parentNode.removeChild(rowEl);
+        }
+      } else {
+        renderEmailList();
+      }
+
+      if (selectedEmail && selectedEmail.id === emailId) {
+        updateReaderToolbar(targetFolder);
+      }
+
+      let label = 'Inbox';
+      if (targetFolder === 'shortlist') label = 'Shortlisted';
+      if (targetFolder === 'trash') label = 'Trash';
+
+      showToast(`Moved to ${label}`, 'info', 4000, () => {
+        // Undo move
+        setEmailFolder(emailId, currentF);
+        renderEmailList();
+        if (selectedEmail && selectedEmail.id === emailId) {
+          updateReaderToolbar(currentF);
+        }
+        showToast(`Restored to ${currentF === 'inbox' ? 'Inbox' : currentF}`, 'info');
+      });
+    }
+
+    applyMove();
+  }
+
+  async function verifyCredentials(caseIdRaw, codeRaw) {
+    const attempts = getAttemptsLeft();
+    if (attempts <= 0) {
+      checkLockoutState(0);
+      return;
+    }
+
+    const caseId = (caseIdRaw || '').trim();
+    const code = (codeRaw || '').trim();
+    const feedbackEl = document.getElementById('secFeedback');
+    const panel = document.getElementById('secureLoginPanel');
+
+    // Empty or whitespace-only inputs show validation message without consuming an attempt
+    if (!caseId || !code) {
+      if (feedbackEl) {
+        feedbackEl.textContent = 'ENTER CASE ID & VERIFICATION CODE';
+        feedbackEl.className = 'sec-feedback text-yellow';
+      }
+      showToast('Please enter both Case ID and Verification Code', 'info');
+      return;
+    }
+
+    const normalized = normalizeCredential(caseId) + '|' + normalizeCredential(code);
+    const hash = await computeSha256(normalized);
+
+    if (hash === TARGET_CREDENTIAL_HASH) {
+      // Correct!
+      if (feedbackEl) {
+        feedbackEl.textContent = '✓ CREDENTIALS VERIFIED';
+        feedbackEl.className = 'sec-feedback text-green';
+      }
       triggerGlitchSuccessFlash();
       audio.successChime();
+      showToast('✓ ACCESS GRANTED — Legitimate incident authenticated!', 'success');
 
-      // Show success toast
-      showToast('✓ LEGITIMATE EMAIL AUTHENTICATED! Extraction successful.', 'success');
-
-      // Update sidebar visual indicator
-      const activeItem = document.querySelector(`.email-item[data-id="${selectedEmail.id}"]`);
-      if (activeItem) {
-        activeItem.classList.add('verified-legit');
-      }
-
-      // Typewriter reveal of extracted Case ID
-      const caseIdCard = document.getElementById('caseIdRevealCard');
+      // Typewriter reveal of successful authentication
+      const revealCard = document.getElementById('caseIdRevealCard');
       const typewriterTarget = document.getElementById('typewriterCaseId');
-      if (caseIdCard && typewriterTarget) {
-        caseIdCard.classList.remove('hidden');
-        typewriterTarget.textContent = '';
-
-        const caseText = 'CASE ID EXTRACTED: CYB-2026-ALPHA';
-        let idx = 0;
-
-        function typeCaseId() {
-          if (idx < caseText.length) {
-            typewriterTarget.textContent += caseText.charAt(idx);
-            idx++;
-            audio.keyClick();
-            setTimeout(typeCaseId, 35);
+      if (revealCard) {
+        revealCard.classList.remove('hidden');
+        if (typewriterTarget) {
+          typewriterTarget.textContent = '';
+          const msg = 'AUTHENTICATION SUCCESSFUL // ACCESS GRANTED';
+          let idx = 0;
+          function typeMsg() {
+            if (idx < msg.length) {
+              typewriterTarget.textContent += msg.charAt(idx);
+              idx++;
+              audio.keyClick();
+              setTimeout(typeMsg, 30);
+            }
           }
+          typeMsg();
         }
-
-        typeCaseId();
       }
 
+      const proceedBtn = document.getElementById('proceedToRound3Btn');
+      if (proceedBtn) {
+        proceedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     } else {
-      // Phishing decoy selected!
-      flaggedPhishIds.add(selectedEmail.id);
-      const activeItem = document.querySelector(`.email-item[data-id="${selectedEmail.id}"]`);
-      if (activeItem) {
-        activeItem.classList.add('flagged-phish');
+      // Incorrect credentials — decrement attempt
+      const newAttempts = setAttemptsLeft(attempts - 1);
+      audio.errorBuzz();
+
+      if (panel) {
+        panel.classList.remove('shake-panel');
+        void panel.offsetWidth;
+        panel.classList.add('shake-panel');
       }
-      showToast('⚠ PHISHING CONFIRMED — try another.', 'error');
+
+      if (feedbackEl) {
+        feedbackEl.textContent = 'CREDENTIALS REJECTED';
+        feedbackEl.className = 'sec-feedback text-red';
+      }
+
+      showToast(`CREDENTIALS REJECTED. Attempts remaining: ${newAttempts}`, 'error');
+
+      if (newAttempts <= 0) {
+        checkLockoutState(0);
+      }
     }
   }
 
@@ -1046,48 +1524,132 @@
   }
 
   // ==========================================================================
-  // 12. HIDDEN ADMIN TROUBLESHOOTING PANEL (Ctrl+Shift+A)
+  // 12. HIDDEN ORGANIZER OVERRIDE CONSOLE (Ctrl+Shift+A)
   // ==========================================================================
-  function initAdminPanel() {
+  function initOrganizerOverride() {
     const adminPanel = document.getElementById('adminPanel');
     const closeBtn = document.getElementById('adminCloseBtn');
+    const authForm = document.getElementById('adminAuthForm');
+    const passphraseInput = document.getElementById('adminPassphraseInput');
+    const authFeedback = document.getElementById('adminAuthFeedback');
+    const passphraseView = document.getElementById('adminPassphraseView');
+    const unlockedView = document.getElementById('adminUnlockedView');
 
-    function toggleAdminPanel() {
+    let isUnlocked = false;
+
+    function openConsole() {
       if (!adminPanel) return;
-      const isHidden = adminPanel.classList.contains('hidden');
-      if (isHidden) {
-        // Decode base64 obfuscated answers when opening
-        try {
-          document.getElementById('adminR2Answer').textContent = atob(_ADM_BLOBS.r2);
-          document.getElementById('adminR3Answer').textContent = atob(_ADM_BLOBS.r3);
-          document.getElementById('adminR4Answer').textContent = atob(_ADM_BLOBS.r4);
-        } catch (e) {
-          console.error(e);
+      adminPanel.classList.remove('hidden');
+      if (!isUnlocked) {
+        if (passphraseView) passphraseView.classList.remove('hidden');
+        if (unlockedView) unlockedView.classList.add('hidden');
+        if (authFeedback) authFeedback.textContent = '';
+        if (passphraseInput) {
+          passphraseInput.value = '';
+          setTimeout(() => passphraseInput.focus(), 50);
         }
-        adminPanel.classList.remove('hidden');
-        audio.keyClick();
-      } else {
-        adminPanel.classList.add('hidden');
       }
+      audio.keyClick();
     }
 
-    // Keyboard shortcut listener: Ctrl+Shift+A or Cmd+Shift+A
+    function closeConsole() {
+      if (adminPanel) adminPanel.classList.add('hidden');
+    }
+
+    // Keyboard shortcut: Ctrl+Shift+A or Cmd+Shift+A
     window.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
         e.preventDefault();
-        toggleAdminPanel();
+        if (adminPanel && !adminPanel.classList.contains('hidden')) {
+          closeConsole();
+        } else {
+          openConsole();
+        }
       } else if (e.key === 'Escape' && adminPanel && !adminPanel.classList.contains('hidden')) {
-        adminPanel.classList.add('hidden');
+        closeConsole();
       }
     });
 
     if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        adminPanel.classList.add('hidden');
+      closeBtn.addEventListener('click', closeConsole);
+    }
+
+    // Passphrase Authentication
+    if (authForm) {
+      authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const inputVal = passphraseInput ? passphraseInput.value.trim() : '';
+        const hash = await computeSha256(inputVal);
+
+        if (hash === ORGANIZER_OVERRIDE_HASH) {
+          isUnlocked = true;
+          if (passphraseView) passphraseView.classList.add('hidden');
+          if (unlockedView) unlockedView.classList.remove('hidden');
+          if (authFeedback) authFeedback.textContent = '';
+          audio.successChime();
+          showToast('✓ ORGANIZER CONSOLE AUTHORIZED', 'success');
+        } else {
+          audio.errorBuzz();
+          if (authFeedback) {
+            authFeedback.textContent = 'INVALID PASSPHRASE // ACCESS DENIED';
+          }
+          if (passphraseInput) {
+            passphraseInput.value = '';
+            passphraseInput.focus();
+          }
+        }
       });
     }
 
-    // Stage jump buttons in admin panel
+    // Action 1: Reset attempts (to 3)
+    const resetAttemptsBtn = document.getElementById('adminResetAttemptsBtn');
+    if (resetAttemptsBtn) {
+      resetAttemptsBtn.addEventListener('click', () => {
+        setAttemptsLeft(MAX_ATTEMPTS);
+        checkLockoutState(MAX_ATTEMPTS);
+        showToast('✓ Attempts reset to 3', 'info');
+      });
+    }
+
+    // Action 2: Reset entire Round 2 (attempts + folders)
+    const resetR2Btn = document.getElementById('adminResetR2Btn');
+    if (resetR2Btn) {
+      resetR2Btn.addEventListener('click', () => {
+        setAttemptsLeft(MAX_ATTEMPTS);
+        try {
+          sessionStorage.removeItem(STORAGE_KEY_FOLDERS);
+        } catch (e) {}
+        updateFolderCounts();
+        renderEmailList();
+        checkLockoutState(MAX_ATTEMPTS);
+
+        const prompt = document.getElementById('emptyInboxPrompt');
+        const view = document.getElementById('emailViewContainer');
+        const revealCard = document.getElementById('caseIdRevealCard');
+        if (prompt) prompt.classList.remove('hidden');
+        if (view) view.classList.add('hidden');
+        if (revealCard) revealCard.classList.add('hidden');
+
+        showToast('✓ Round 2 reset (attempts + folders)', 'info');
+      });
+    }
+
+    // Action 3: Force-unlock Round 3
+    const forceUnlockR3Btn = document.getElementById('adminForceUnlockR3Btn');
+    if (forceUnlockR3Btn) {
+      forceUnlockR3Btn.addEventListener('click', () => {
+        const revealCard = document.getElementById('caseIdRevealCard');
+        if (revealCard) revealCard.classList.remove('hidden');
+        closeConsole();
+        showToast('✓ Round 3 unlocked via Organizer Override', 'success');
+        const proceedBtn = document.getElementById('proceedToRound3Btn');
+        if (proceedBtn) {
+          proceedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    }
+
+    // Stage jump buttons
     const jumpButtons = document.querySelectorAll('[data-jump]');
     jumpButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1097,9 +1659,9 @@
         } else {
           const victoryOverlay = document.getElementById('victoryOverlay');
           if (victoryOverlay) victoryOverlay.classList.add('hidden');
-          goToSection(parseInt(target));
+          goToSection(parseInt(target, 10));
         }
-        adminPanel.classList.add('hidden');
+        closeConsole();
       });
     });
   }
@@ -1179,8 +1741,21 @@
     initMailbox();
     initPasswordTerminal();
     initAiChallenge();
-    initAdminPanel();
+    initOrganizerOverride();
     initGlobalControls();
+
+    const hash = window.location.hash.toLowerCase();
+    if (hash === '#round2' || hash === '#mailbox') {
+      goToSection(3);
+      const firstItem = document.querySelector('.email-item');
+      if (firstItem) firstItem.click();
+    } else if (hash === '#round1' || hash === '#dossier') {
+      goToSection(2);
+    } else if (hash === '#round3' || hash === '#terminal') {
+      goToSection(4);
+    } else if (hash === '#round4' || hash === '#ai') {
+      goToSection(5);
+    }
   });
 
 })();

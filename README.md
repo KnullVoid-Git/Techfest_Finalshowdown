@@ -7,7 +7,7 @@ A single-page, fully static, zero-backend cybersecurity competition / CTF challe
 ## ⚡ Quick Start
 - Simply double-click `index.html` to open directly in any modern browser (Chrome, Edge, Firefox, Safari), or serve with any static HTTP server:
   ```bash
-  python3 -m http.server 8000
+  python3 -m http.server 8080 --bind 127.0.0.1
   ```
 - **Zero dependencies & zero build steps**: Powered strictly by pure HTML5, CSS3, and vanilla ES6+ JavaScript.
 - **Offline Tolerant**: Fully self-contained. Font stacks and animations have graceful offline fallbacks if the venue Wi-Fi drops.
@@ -29,16 +29,34 @@ A single-page, fully static, zero-backend cybersecurity competition / CTF challe
 - "PROCEED TO ROUND 2" button unlocks the virtual mailbox.
 
 ### 3. Round 2 — Virtual Mailbox (`02 MAILBOX`)
-- **Full two-pane interactive webmail client**:
-  - **Left Pane**: Search filter and scrollable incoming spool of 21 intercepted emails, with timestamps, sender headers, and unread / read / flagged status tags.
-  - **Right Pane**: Detailed reading view with simulated SPF / DKIM verification badges and full email message body.
-- **Fisher-Yates Shuffle**: Automatically shuffles the 21 emails on every page load so participants cannot memorize the list position.
-- **Anti-Cheat Cryptographic Validation**:
-  - Clicking "Mark as Legitimate" computes a runtime SHA-256 hash of the sender address and compares it to a precomputed digest.
-  - The plaintext target address (`account-security@microsoft.com`) is **never stored as a plain answer string** in the JS validation code, thwarting view-source cheating.
-- **Feedback**:
-  - **Legitimate Email Selected**: Triggers a fullscreen green glitch flash, success chime, marks the email with a `[VERIFIED AUTHENTIC]` seal, types out `CASE ID EXTRACTED: CYB-2026-ALPHA`, and reveals the "PROCEED TO ROUND 3" button.
-  - **Phishing Decoy Selected**: Displays a red toast notification `⚠ PHISHING CONFIRMED — try another.`, plays an error buzz, and marks the decoy with a `[FLAGGED PHISH]` tag for unlimited retries without page reload.
+- **Fixed 100dvh 3-Column App Shell** (`[folders 220px] [email list 340px] [reading pane 1fr]`):
+  - Fixed full viewport height without page-level scrolling.
+  - Email list and reading pane scroll independently with `min-height: 0; overflow-y: auto`.
+  - Selecting any email immediately resets the reading pane's `scrollTop = 0`, presenting the email starting at the top without scrolling.
+  - On screens ≤ 900px, switches to a single-pane drill-down with a back button.
+- **Triage Directories & Persistence**:
+  - Folders sidebar with live count badges: **Inbox**, **Shortlisted**, and **Trash**.
+  - Participants can triage emails via row hover buttons (Bookmark 🔖 to Shortlist, Trash 🗑 to delete) or via the reading view toolbar.
+  - Triage actions feature smooth ~0.25s GSAP slide-out animations and an **Undo** toast notification.
+  - Folder allocations are persisted in `sessionStorage` (`bo_r2_folders`) to prevent accidental refreshes from wiping progress.
+  - Triage tools are completely neutral aids: they do not consume attempts, reveal correctness, or alter scores.
+- **Decoy & Legitimate Credentials**:
+  - Every email body includes credentials before the sign-off:
+    - Legit email (`id: 0`) and tricky fakes (`ids: 1-10`): `Security Case ID` + `Verification Code`
+    - Obvious fakes (`ids: 11-20`): `Case ID` + `Code`
+    - Several decoys are deliberate near-misses of the genuine credentials.
+- **Secure Login Authentication**:
+  - Pinned bottom sidebar panel: `Security Case ID` and `Verification Code`.
+  - Validation normalizes inputs (uppercase, removes all non-alphanumeric characters), concatenates as `caseId + "|" + code`, and compares against precomputed SHA-256 hash `1c6e701b949a0256ae02e1d87f60cd93fe0c808a5fa6807e4d9438534500416d`.
+  - Zero plaintext credentials or answers are stored in the client script, DOM, or comments.
+  - Empty or whitespace submissions show an informative message without deducting attempts.
+- **3-Attempt Limit & Security Lockout**:
+  - Maximum of 3 attempts (`MAX_ATTEMPTS = 3`) indicated by visual LED pips.
+  - Attempt counts are persisted in `localStorage` (`bo_r2_attempts`).
+  - Incorrect credential verification shakes the panel, displays `CREDENTIALS REJECTED`, and decrements an attempt.
+  - At 0 attempts, an unclosable full-screen overlay locks the mailbox: `"SECURITY LOCKOUT — ACCESS DENIED. Call an organizer."`
+- **Unlock Round 3**:
+  - Correct credentials trigger an `ACCESS GRANTED` glitch animation and reveal the "PROCEED TO ROUND 3" button.
 
 ### 4. Round 3 — Password Terminal (`03 TERMINAL`)
 - Retro hacker terminal with a blinking cursor and 5 forensic clue lines.
@@ -59,12 +77,28 @@ A single-page, fully static, zero-backend cybersecurity competition / CTF challe
 
 ---
 
-## 🛠️ Hidden Organizer Admin Console
-- **Keyboard Shortcut**: Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd> (or <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd> on macOS) at any time.
-- **Features**:
-  - Displays the plaintext answers for all rounds (decoded on demand from obfuscated strings).
-  - Quick Stage Navigator buttons (`00: BOOT`, `01: DOSSIER`, `02: MAILBOX`, `03: TERMINAL`, `04: AI ROUND`, `05: VICTORY`) allowing organizers to jump directly to any stage for testing or stage-reset.
-  - Press <kbd>Esc</kbd> or click the close button to dismiss.
+## 🛠️ Organizer Override Console
+
+- **Keyboard Shortcut**: Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd> (or <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd> on macOS) at any time. Press <kbd>Esc</kbd> to close.
+- **Passphrase Protected**:
+  - Default passphrase: `ghost-protocol-2026`
+  - Validated securely via SHA-256 hash `db92f80fc751eebc031eec7d915b7b7d25bc26c3d4831669dec5dc165838cef0`.
+  - No answers are disclosed in the console or source.
+- **Override Capabilities**:
+  1. **Reset Attempts (to 3)**: Clears the lockout overlay and restores 3 verification attempts.
+  2. **Reset Entire Round 2 (Attempts + Folders)**: Clears `sessionStorage` folders and resets attempts.
+  3. **Force-Unlock Round 3**: Immediately reveals the authentication card and "Proceed to Round 3" button.
+  4. **Stage Navigator**: Jump directly to any stage (`00: BOOT`, `01: DOSSIER`, `02: MAILBOX`, `03: TERMINAL`, `04: AI ROUND`, `05: VICTORY`).
+
+### How to Change the Organizer Passphrase:
+1. Generate the SHA-256 hash of your custom passphrase in terminal:
+   ```bash
+   echo -n "your-new-secret-passphrase" | shasum -a 256
+   ```
+2. In `script.js`, update `ORGANIZER_OVERRIDE_HASH` with the generated 64-character hex digest:
+   ```javascript
+   const ORGANIZER_OVERRIDE_HASH = "your_new_sha256_hash_here";
+   ```
 
 ---
 
@@ -78,4 +112,4 @@ A single-page, fully static, zero-backend cybersecurity competition / CTF challe
 - **Typography**: Google Fonts `"JetBrains Mono"` with fallback to system monospace.
 - **Overlays**: Fixed-position CRT scanline grid and subtle radial vignette.
 - **Audio**: Custom Web Audio API synthesizer (no external MP3/WAV files required; toggleable via header HUD).
-- **Responsive**: Tested for ultra-crisp display on 16:9 1080p/4K projectors and laptop viewports.
+- **Responsive & Projector Ready**: Rigorously tested at 1366x768 (standard laptop) and 1920x1080 (HD / Projector).
