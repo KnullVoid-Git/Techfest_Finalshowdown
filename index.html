@@ -296,6 +296,11 @@
           <p class="r2-instruction-copy">Find the legitimate email. Use the credentials inside it to authenticate. You have 3 attempts. Choose carefully.</p>
         </div>
         <div class="mailbox-stat-badges">
+          <button id="mailboxReshuffleBtn" class="cyber-button sm reshuffle-btn" type="button" title="Restart Round 2 with a newly reshuffled inbox">
+            <span class="btn-bracket">[</span>
+            <span class="btn-text">🔄 RETRY / RESHUFFLE INBOX</span>
+            <span class="btn-bracket">]</span>
+          </button>
           <span class="stat-pill"><span class="pill-dot"></span> STATUS: <strong class="text-cyan">LIVE FORENSIC TRIAGE</strong></span>
         </div>
       </div>
@@ -470,6 +475,21 @@
             <h2 class="glitch-text text-red" data-text="SECURITY LOCKOUT">SECURITY LOCKOUT</h2>
             <div class="lockout-subtitle">ACCESS DENIED. Call an organizer.</div>
             <p class="lockout-desc">Authentication attempts exhausted (0/3). This workstation has been isolated by central security protocols.</p>
+
+            <div class="lockout-actions">
+              <button id="lockoutRetryReshuffleBtn" class="cyber-button primary-btn lockout-retry-btn" type="button">
+                <span class="btn-bracket">[</span>
+                <span class="btn-text">🔄 RETRY WITH RESHUFFLED INBOX</span>
+                <span class="btn-bracket">]</span>
+                <span class="btn-glow"></span>
+              </button>
+              <button id="lockoutCallOrganizerBtn" class="cyber-button text-btn lockout-organizer-btn" type="button">
+                <span>⚡ Open Organizer Console (Ctrl+Shift+A)</span>
+              </button>
+            </div>
+            <div class="lockout-retry-note text-dim">
+              Reboots workstation, restores 3/3 attempts, clears triage filters, and randomly reshuffles all 21 dispatches.
+            </div>
           </div>
         </div>
 
@@ -923,7 +943,7 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
 
           <div class="admin-actions-grid">
             <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET ATTEMPTS (TO 3)</button>
-            <button class="cyber-button sm" id="adminResetR2Btn">RESET ENTIRE ROUND 2 (ATTEMPTS + FOLDERS)</button>
+            <button class="cyber-button sm" id="adminResetR2Btn">RESET & RESHUFFLE ROUND 2 (ATTEMPTS + FOLDERS)</button>
             <button class="cyber-button primary-btn sm" id="adminForceUnlockR3Btn">FORCE-UNLOCK ROUND 3</button>
           </div>
 

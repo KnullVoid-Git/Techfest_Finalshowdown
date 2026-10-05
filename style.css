@@ -1069,7 +1069,24 @@ html, body {
 
 .mailbox-stat-badges {
   display: flex;
+  align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reshuffle-btn {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-color: var(--border-cyan);
+  color: var(--neon-cyan);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.reshuffle-btn:hover {
+  border-color: var(--neon-cyan);
+  background: var(--neon-cyan);
+  color: var(--bg-black);
+  box-shadow: 0 0 12px var(--neon-cyan);
 }
 
 .stat-pill {
@@ -1729,6 +1746,48 @@ html, body {
   font-size: 0.82rem;
   color: var(--text-dim);
   line-height: 1.5;
+}
+
+.lockout-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  width: 100%;
+}
+
+.lockout-retry-btn {
+  width: 100%;
+  max-width: 440px;
+  padding: 12px 20px;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.lockout-organizer-btn {
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  transition: color 0.2s ease;
+}
+
+.lockout-organizer-btn:hover {
+  color: var(--neon-cyan);
+}
+
+.lockout-retry-note {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin-top: 4px;
+  max-width: 440px;
 }
 
 /* Mobile Back Button */

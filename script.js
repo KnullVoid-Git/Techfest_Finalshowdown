@@ -1010,6 +1010,7 @@
     return arr;
   }
 
+  let globalOpenAdminConsole = null;
   let shuffledEmails = [];
   let selectedEmail = null;
   let currentFolder = 'inbox'; // 'inbox' | 'shortlist' | 'trash'
@@ -1121,6 +1122,86 @@
     return (val || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   }
 
+  // Reset & Reshuffle Round 2 Mailbox
+  function resetMailboxWithReshuffle(options = {}) {
+    const restoreAttempts = options.restoreAttempts !== false;
+    const announce = options.announce !== false;
+
+    // 1. Restore attempts
+    if (restoreAttempts) {
+      setAttemptsLeft(MAX_ATTEMPTS);
+    }
+
+    // 2. Clear triage folder state in sessionStorage
+    try {
+      sessionStorage.removeItem(STORAGE_KEY_FOLDERS);
+    } catch (e) {}
+
+    // 3. Reset internal tracking
+    readEmailIds.clear();
+    selectedEmail = null;
+    currentFolder = 'inbox';
+
+    // 4. Randomly reshuffle emails array (Fisher-Yates)
+    shuffledEmails = shuffle(emails);
+
+    // 5. Reset Folder tabs UI
+    const folderButtons = [
+      { id: 'folderBtnInbox', folder: 'inbox', title: '📥 INBOX SPOOL' },
+      { id: 'folderBtnShortlist', folder: 'shortlist', title: '🔖 SHORTLISTED' },
+      { id: 'folderBtnTrash', folder: 'trash', title: '🗑 TRASH SPOOL' }
+    ];
+    folderButtons.forEach(b => {
+      const el = document.getElementById(b.id);
+      if (el) el.classList.toggle('active', b.folder === 'inbox');
+    });
+    const titleEl = document.getElementById('currentFolderTitle');
+    if (titleEl) titleEl.innerHTML = '<span class="folder-icon">📥</span> INBOX SPOOL';
+
+    // 6. Reset search input
+    const searchInput = document.getElementById('mailboxSearchInput');
+    if (searchInput) searchInput.value = '';
+
+    // 7. Reset reading pane
+    const emptyPrompt = document.getElementById('emptyInboxPrompt');
+    const emailView = document.getElementById('emailViewContainer');
+    const revealCard = document.getElementById('caseIdRevealCard');
+    if (emptyPrompt) emptyPrompt.classList.remove('hidden');
+    if (emailView) emailView.classList.add('hidden');
+    if (revealCard) revealCard.classList.add('hidden');
+
+    // 8. Reset login inputs & feedback
+    const caseIdInput = document.getElementById('secCaseIdInput');
+    const codeInput = document.getElementById('secCodeInput');
+    const feedback = document.getElementById('secFeedback');
+    if (caseIdInput) caseIdInput.value = '';
+    if (codeInput) codeInput.value = '';
+    if (feedback) feedback.textContent = '';
+
+    // 9. Hide lockout overlay
+    checkLockoutState(restoreAttempts ? MAX_ATTEMPTS : getAttemptsLeft());
+
+    // 10. Update folder counts and re-render list
+    updateFolderCounts();
+    renderEmailList();
+
+    // Reset scroll positions
+    const listContainer = document.getElementById('emailListContainer');
+    if (listContainer) listContainer.scrollTop = 0;
+    const readingPane = document.getElementById('readingPane');
+    if (readingPane) readingPane.scrollTop = 0;
+
+    // Mobile shell reset
+    const shell = document.getElementById('mailboxShell');
+    if (shell) shell.classList.remove('viewing-email');
+
+    // 11. Audio chime & feedback
+    if (announce) {
+      audio.successChime();
+      showToast('✓ INBOX RESHUFFLED // 3/3 ATTEMPTS RESTORED', 'success');
+    }
+  }
+
   // Init Mailbox
   function initMailbox() {
     shuffledEmails = shuffle(emails);
@@ -1208,6 +1289,39 @@
     if (proceedToR3) {
       proceedToR3.addEventListener('click', () => {
         goToSection(4);
+      });
+    }
+
+    // Lockout Screen Actions: Retry & Reshuffle Button
+    const lockoutRetryBtn = document.getElementById('lockoutRetryReshuffleBtn');
+    if (lockoutRetryBtn) {
+      lockoutRetryBtn.addEventListener('click', () => {
+        resetMailboxWithReshuffle({ restoreAttempts: true, announce: true });
+      });
+    }
+
+    // Lockout Screen Actions: Call Organizer / Open Console
+    const lockoutOrgBtn = document.getElementById('lockoutCallOrganizerBtn');
+    if (lockoutOrgBtn) {
+      lockoutOrgBtn.addEventListener('click', () => {
+        if (typeof globalOpenAdminConsole === 'function') {
+          globalOpenAdminConsole();
+        }
+      });
+    }
+
+    // Top Header: Reshuffle Button
+    const mailboxReshuffleBtn = document.getElementById('mailboxReshuffleBtn');
+    if (mailboxReshuffleBtn) {
+      mailboxReshuffleBtn.addEventListener('click', () => {
+        if (getAttemptsLeft() === 0) {
+          resetMailboxWithReshuffle({ restoreAttempts: true, announce: true });
+        } else {
+          const ok = confirm('Restart Round 2? This will restore 3/3 attempts, reset triage folders, and randomly reshuffle all 21 emails.');
+          if (ok) {
+            resetMailboxWithReshuffle({ restoreAttempts: true, announce: true });
+          }
+        }
       });
     }
   }
@@ -1867,6 +1981,7 @@
       }
       audio.keyClick();
     }
+    globalOpenAdminConsole = openConsole;
 
     function closeConsole() {
       if (adminPanel) adminPanel.classList.add('hidden');
@@ -2011,26 +2126,12 @@
       });
     }
 
-    // Action 2: Reset entire Round 2 (attempts + folders)
+    // Action 2: Reset entire Round 2 (attempts + folders + reshuffle)
     const resetR2Btn = document.getElementById('adminResetR2Btn');
     if (resetR2Btn) {
       resetR2Btn.addEventListener('click', () => {
-        setAttemptsLeft(MAX_ATTEMPTS);
-        try {
-          sessionStorage.removeItem(STORAGE_KEY_FOLDERS);
-        } catch (e) {}
-        updateFolderCounts();
-        renderEmailList();
-        checkLockoutState(MAX_ATTEMPTS);
-
-        const prompt = document.getElementById('emptyInboxPrompt');
-        const view = document.getElementById('emailViewContainer');
-        const revealCard = document.getElementById('caseIdRevealCard');
-        if (prompt) prompt.classList.remove('hidden');
-        if (view) view.classList.add('hidden');
-        if (revealCard) revealCard.classList.add('hidden');
-
-        showToast('✓ Round 2 reset (attempts + folders)', 'info');
+        resetMailboxWithReshuffle({ restoreAttempts: true, announce: false });
+        showToast('✓ Round 2 reset & reshuffled (attempts + folders)', 'info');
       });
     }
 
