@@ -36,8 +36,8 @@
         <span class="step-num">00</span><span class="step-label">BOOT</span>
       </div>
       <div class="tracker-divider">/</div>
-      <div class="tracker-step" data-step="2" title="Round 1: Recon Dossier">
-        <span class="step-num">01</span><span class="step-label">DOSSIER</span>
+      <div class="tracker-step" data-step="2" title="Round 1: Reconnaissance">
+        <span class="step-num">01</span><span class="step-label">RECON</span>
       </div>
       <div class="tracker-divider">/</div>
       <div class="tracker-step" data-step="3" title="Round 2: Mailbox Intercept">
@@ -54,6 +54,16 @@
     </nav>
 
     <div class="header-right">
+      <div class="team-session-pill" id="teamSessionPill">
+        <span class="team-pill-icon">👥</span>
+        <label for="teamSelect" class="team-pill-label">TEAM:</label>
+        <select id="teamSelect" class="team-pill-select" aria-label="Active Team">
+          <option value="team-alpha">Team Alpha</option>
+          <option value="team-beta">Team Beta</option>
+          <option value="team-gamma">Team Gamma</option>
+          <option value="__new__">+ New Team...</option>
+        </select>
+      </div>
       <button class="hud-btn" id="audioToggleBtn" title="Toggle Terminal Audio Feedback">
         <span class="hud-icon" id="audioIcon">🔊</span> <span id="audioLabel">AUDIO: ON</span>
       </button>
@@ -123,100 +133,144 @@
   <!-- ========================================================================= -->
   <!-- SECTION 2: ROUND 1 — RECON DOSSIER                                        -->
   <!-- ========================================================================= -->
+  <!-- ========================================================================= -->
+  <!-- SECTION 2: ROUND 1 — RECONNAISSANCE                                       -->
+  <!-- ========================================================================= -->
   <section id="section-round1" class="view-section">
-    <div class="section-wrapper dossier-layout">
+    <div class="section-wrapper recon-layout">
       
       <!-- Section Header -->
       <div class="section-heading-bar">
         <div>
-          <span class="sub-badge cyan-border">PHASE 01 // RECONNAISSANCE</span>
-          <h2 class="glitch-text" data-text="CLASSIFIED INCIDENT DOSSIER">CLASSIFIED INCIDENT DOSSIER</h2>
+          <div class="recon-brand-tag">FINAL SHOWDOWN</div>
+          <h2 class="glitch-text" data-text="ROUND 1">ROUND 1</h2>
+          <div class="recon-subtitle">RECONNAISSANCE</div>
         </div>
         <div class="stamp-box">
-          <span class="stamp-text">RESTRICTED // EYES ONLY</span>
-          <span class="stamp-id">OP: SHOWDOWN-2026</span>
+          <span class="stamp-text">RESTRICTED // DOSSIER</span>
+          <span class="stamp-id">TARGET: KAPIDHWAJ INNOVATIONS</span>
         </div>
       </div>
 
-      <!-- Dossier Classified Card -->
-      <div class="terminal-card dossier-card">
-        <div class="dossier-watermark" aria-hidden="true">TOP SECRET</div>
-        
-        <div class="dossier-meta-grid">
-          <div class="meta-item">
-            <span class="meta-label">TARGET INFRASTRUCTURE:</span>
-            <span class="meta-value text-green">GLOBAL CLOUD FABRIC // SECTOR-11</span>
+      <!-- Reconnaissance Main Card -->
+      <div class="terminal-card recon-card">
+        <div class="recon-watermark" aria-hidden="true">RECON</div>
+
+        <!-- Reconnaissance Intelligence Grid -->
+        <div class="recon-intel-container">
+          <div class="recon-intel-header">
+            <span class="intel-tag">// INTEL DOSSIER</span>
+            <span class="intel-title">RECONNAISSANCE DATASET</span>
           </div>
-          <div class="meta-item">
-            <span class="meta-label">INCIDENT CLASSIFICATION:</span>
-            <span class="meta-value text-red">CRITICAL EXTRUSION / ADVANCED PERSISTENT THREAT</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">LEAD INVESTIGATOR:</span>
-            <span class="meta-value text-cyan">COLLEGE TECH FEST INCIDENT RESPONSE CELL</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">TIMESTAMPS:</span>
-            <span class="meta-value">2026-10-01 02:47:19 UTC [ONGOING]</span>
+
+          <div class="recon-grid">
+            <div class="recon-item">
+              <span class="recon-label">Organization</span>
+              <span class="recon-value text-green">Kapidhwaj Innovations</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Year</span>
+              <span class="recon-value text-cyan">2025</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Location</span>
+              <span class="recon-value">Delhi</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Official Website</span>
+              <span class="recon-value text-cyan">kapidhwajinnovations.com</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Tagline</span>
+              <span class="recon-value text-green">Beyond Software</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Founder</span>
+              <span class="recon-value text-cyan">Prachet Ray</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Date Clue</span>
+              <span class="recon-value text-green">17 January 2005</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Project</span>
+              <span class="recon-value">Project K</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Reference</span>
+              <span class="recon-value text-cyan">K.A.M.A.L.A.</span>
+            </div>
+            <div class="recon-item">
+              <span class="recon-label">Number</span>
+              <span class="recon-value text-green">2</span>
+            </div>
+            <div class="recon-item span-full">
+              <span class="recon-label">Social Media</span>
+              <span class="recon-value">Kapidhwaj Innovations — Instagram / LinkedIn</span>
+            </div>
           </div>
         </div>
 
-        <hr class="dossier-divider">
+        <hr class="recon-divider">
 
-        <!-- ============================================================= -->
-        <!-- EDITABLE ROUND 1 DOSSIER CONTENT BLOCK                        -->
-        <!-- Organizers: You can easily modify the briefing text below!     -->
-        <!-- ============================================================= -->
-        <div class="dossier-body custom-scroll">
-          <div class="dossier-block">
-            <h3 class="block-title">// 1.0 EXECUTIVE INCIDENT BRIEF</h3>
-            <p>
-              At 02:47 UTC, telemetry monitors detected unauthorized lateral movement across privileged enterprise subnets. 
-              The adversary initiated credential harvesting vectors targeted specifically against Microsoft 365 identity federations. 
-              Multiple spear-phishing payloads were launched synchronously to obfuscate legitimate operational alerts and divert defensive triage.
-            </p>
+        <!-- MISSION Challenge Section -->
+        <div class="recon-mission-card">
+          <div class="mission-header">
+            <span class="mission-tag">// DIRECTIVE</span>
+            <h3 class="mission-title">MISSION</h3>
           </div>
+          <p class="mission-instruction">
+            Analyze the provided reconnaissance information and identify the intended Round 1 answer.
+          </p>
 
-          <div class="dossier-block">
-            <h3 class="block-title">// 1.1 THREAT ACTOR PROFILE [DESIGNATION: PHANTOM-X]</h3>
-            <p>
-              Adversary utilizes sophisticated spoofing infrastructure, purchasing deceptive domains with high typographic similarity to enterprise authentication portals. 
-              Forensic packet captures reveal communication routed through <span class="redacted" title="Click or hover to reveal">NODE: 185.220.101.42 (BUCHAREST RELAY)</span> using encrypted tunnels. 
-              The attacker's signature methodology relies on social engineering urgency, targeting panic around account termination and credential invalidation.
-            </p>
-          </div>
+          <form id="round1Form" class="mission-form" autocomplete="off" onsubmit="return false;">
+            <div class="mission-field">
+              <label for="round1PasswordInput" class="mission-label">ENTER ROUND 1 PASSWORD</label>
+              <div class="mission-input-row">
+                <input 
+                  type="password" 
+                  id="round1PasswordInput" 
+                  class="terminal-input r1-input" 
+                  placeholder="Enter password..." 
+                  autocomplete="off" 
+                  spellcheck="false"
+                  required
+                >
+                <button type="submit" id="round1SubmitBtn" class="cyber-button primary-btn">
+                  <span class="btn-bracket">[</span>
+                  <span class="btn-text">SUBMIT</span>
+                  <span class="btn-bracket">]</span>
+                  <span class="btn-glow"></span>
+                </button>
+              </div>
+            </div>
 
-          <div class="dossier-block">
-            <h3 class="block-title">// 1.2 FORENSIC EVIDENCE & REDACTED INTEL</h3>
-            <p>
-              Physical intrusion vector was initially triggered via an unvetted endpoint: <span class="redacted" title="Click or hover to reveal">WORKSTATION-BLD4-FLOOR2-RACK9</span>. 
-              Interception analysts caught an active email dispatch cycle containing twenty-one communication streams. 
-              Only a single transmission originates from the genuine cryptographically authenticated provider infrastructure. 
-              All remaining transmissions are weaponized replicas designed to extract credentials.
-            </p>
-            <p>
-              Primary objective for Phase 2: Infiltrate the captured mail spool, distinguish the authentic communication from the adversary's phishing barrage, and extract the secret Case Identifier.
-            </p>
-          </div>
+            <!-- Feedback States -->
+            <div id="round1ErrorBanner" class="r1-banner r1-error hidden" role="alert">
+              <div class="r1-banner-icon">✖</div>
+              <div class="r1-banner-text">
+                <div class="r1-banner-title">INCORRECT PASSWORD</div>
+                <div class="r1-banner-sub">TRY AGAIN</div>
+              </div>
+            </div>
 
-          <div class="dossier-block">
-            <h3 class="block-title">// 1.3 ENGAGEMENT RULES</h3>
-            <ul class="dossier-list">
-              <li><span class="text-green">[✓]</span> Scrutinize email sender hostnames, DKIM/SPF anomalies, and deceptive domain character replacements.</li>
-              <li><span class="text-green">[✓]</span> False positive classifications will trigger alert trips in the defensive sandbox.</li>
-              <li><span class="text-green">[✓]</span> Extract the Case ID to unlock downstream encryption vault access.</li>
-            </ul>
-          </div>
+            <div id="round1SuccessBanner" class="r1-banner r1-success hidden" role="status">
+              <div class="r1-banner-icon">✔</div>
+              <div class="r1-banner-text">
+                <div class="r1-banner-title">ROUND 1 COMPLETE</div>
+                <div class="r1-banner-sub">RECONNAISSANCE SUCCESSFUL</div>
+              </div>
+            </div>
+          </form>
         </div>
-        <!-- END EDITABLE ROUND 1 DOSSIER CONTENT BLOCK -->
 
-        <!-- Dossier Footer Action -->
+        <!-- Footer / Progression Action -->
         <div class="dossier-footer">
-          <div class="dossier-status">
-            <span class="status-indicator-led"></span>
-            <span>DOSSIER VERIFIED // ACCESS TO INTERCEPTED INBOX AUTHORIZED</span>
+          <div class="dossier-status" id="round1StatusIndicator">
+            <span class="status-indicator-led" id="round1Led"></span>
+            <span id="round1StatusText">STATUS: AWAITING ROUND 1 AUTHENTICATION</span>
           </div>
-          <button class="cyber-button primary-btn" id="proceedToRound2Btn">
+          <button class="cyber-button primary-btn locked-btn" id="proceedToRound2Btn" disabled>
             <span class="btn-bracket">[</span>
             <span class="btn-text">PROCEED TO ROUND 2: VIRTUAL MAILBOX >></span>
             <span class="btn-bracket">]</span>
@@ -842,6 +896,31 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
         <!-- Unlocked View: Action Controls (No Answers Stored or Displayed) -->
         <div id="adminUnlockedView" class="admin-unlocked-view hidden">
           <div class="admin-status-text text-green">✓ OVERRIDE AUTHORIZED // ROOT PRIVILEGES</div>
+
+          <!-- Round 1 Teams Live Telemetry Table -->
+          <div class="admin-telemetry-section">
+            <div class="admin-subhead text-cyan">// ROUND 1 LIVE TEAMS TELEMETRY</div>
+            <div class="admin-table-wrapper">
+              <table class="admin-teams-table">
+                <thead>
+                  <tr>
+                    <th>TEAM</th>
+                    <th>R1 STATUS</th>
+                    <th>ATTEMPTS</th>
+                    <th>COMPLETED AT</th>
+                    <th>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody id="adminTeamsTableBody">
+                  <tr><td colspan="5" class="text-dim">Loading telemetry...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="admin-table-actions">
+              <button type="button" class="cyber-button sm" id="adminRefreshTeamsBtn">⟳ REFRESH TEAMS DATA</button>
+            </div>
+          </div>
+
           <div class="admin-actions-grid">
             <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET ATTEMPTS (TO 3)</button>
             <button class="cyber-button sm" id="adminResetR2Btn">RESET ENTIRE ROUND 2 (ATTEMPTS + FOLDERS)</button>
@@ -852,7 +931,7 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
             <div class="jump-title">QUICK STAGE NAVIGATOR:</div>
             <div class="jump-buttons">
               <button class="cyber-button sm" data-jump="1">00: BOOT</button>
-              <button class="cyber-button sm" data-jump="2">01: DOSSIER</button>
+              <button class="cyber-button sm" data-jump="2">01: RECON</button>
               <button class="cyber-button sm" data-jump="3">02: MAILBOX</button>
               <button class="cyber-button sm" data-jump="4">03: TERMINAL</button>
               <button class="cyber-button sm" data-jump="5">04: AI ROUND</button>

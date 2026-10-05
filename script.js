@@ -355,9 +355,18 @@
   };
 
   let currentStage = 1;
+  let round1Completed = false;
+  let adminOverrideActive = false;
 
-  function goToSection(stageNum) {
+  function goToSection(stageNum, bypassLock = false) {
     if (!sections[stageNum]) return;
+
+    if (stageNum >= 3 && !round1Completed && !adminOverrideActive && !bypassLock) {
+      showToast('ACCESS DENIED: Complete Round 1 Reconnaissance first.', 'error');
+      audio.errorBuzz();
+      return;
+    }
+
     currentStage = stageNum;
 
     // Update section visibility
@@ -510,20 +519,239 @@
   }
 
   // ==========================================================================
-  // 7. SECTION 2: ROUND 1 — RECON DOSSIER INTERACTIVITY
+  // 7. SECTION 2: ROUND 1 — RECONNAISSANCE CONTROLLER & API VALIDATION
   // ==========================================================================
-  function initDossier() {
-    const redactedElements = document.querySelectorAll('.redacted');
-    redactedElements.forEach(el => {
-      el.addEventListener('click', () => {
-        el.classList.toggle('revealed');
-        audio.keyClick();
-      });
-    });
+  let activeTeamId = 'team-alpha';
+  try {
+    const savedTeam = localStorage.getItem('r1_active_team');
+    if (savedTeam) activeTeamId = savedTeam;
+  } catch (e) {}
 
+  async function loadRound1Status() {
+    try {
+      const res = await fetch(`/api/round1/status?teamId=${encodeURIComponent(activeTeamId)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      
+      const errBanner = document.getElementById('round1ErrorBanner');
+      const succBanner = document.getElementById('round1SuccessBanner');
+      const statusText = document.getElementById('round1StatusText');
+      const statusLed = document.getElementById('round1Led');
+      const proceedBtn = document.getElementById('proceedToRound2Btn');
+      const passwordInput = document.getElementById('round1PasswordInput');
+
+      if (data.completed) {
+        round1Completed = true;
+        if (errBanner) errBanner.classList.add('hidden');
+        if (succBanner) succBanner.classList.remove('hidden');
+        const timeInfo = data.completedAt ? ` [${data.completedAt}]` : '';
+        if (statusText) statusText.textContent = `STATUS: RECONNAISSANCE COMPLETE // PROCEED TO ROUND 2 AUTHORIZED${timeInfo}`;
+        if (statusLed) statusLed.classList.remove('locked');
+        if (proceedBtn) {
+          proceedBtn.removeAttribute('disabled');
+          proceedBtn.classList.remove('locked-btn');
+        }
+        if (passwordInput) {
+          passwordInput.disabled = true;
+          passwordInput.placeholder = 'AUTHENTICATED // ACCESS GRANTED';
+        }
+      } else {
+        round1Completed = false;
+        if (errBanner) errBanner.classList.add('hidden');
+        if (succBanner) succBanner.classList.add('hidden');
+        const attemptsText = data.attempts > 0 ? ` (${data.attempts} ATTEMPTS LOGGED)` : '';
+        if (statusText) statusText.textContent = `STATUS: AWAITING ROUND 1 AUTHENTICATION${attemptsText}`;
+        if (statusLed) statusLed.classList.add('locked');
+        if (proceedBtn) {
+          proceedBtn.setAttribute('disabled', 'true');
+          proceedBtn.classList.add('locked-btn');
+        }
+        if (passwordInput) {
+          passwordInput.disabled = false;
+          passwordInput.placeholder = 'Enter password...';
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load Round 1 status from backend:', err);
+    }
+  }
+
+  async function submitRound1Password(enteredPassword) {
+    const errBanner = document.getElementById('round1ErrorBanner');
+    const succBanner = document.getElementById('round1SuccessBanner');
+    const statusText = document.getElementById('round1StatusText');
+    const statusLed = document.getElementById('round1Led');
+    const proceedBtn = document.getElementById('proceedToRound2Btn');
+    const passwordInput = document.getElementById('round1PasswordInput');
+
+    if (!enteredPassword || !enteredPassword.trim()) {
+      showToast('Please enter a password', 'info');
+      if (passwordInput) passwordInput.focus();
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/round1/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamId: activeTeamId,
+          password: enteredPassword
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.completed) {
+        round1Completed = true;
+        if (errBanner) errBanner.classList.add('hidden');
+        if (succBanner) succBanner.classList.remove('hidden');
+        if (statusText) statusText.textContent = 'STATUS: RECONNAISSANCE COMPLETE // PROCEED TO ROUND 2 AUTHORIZED';
+        if (statusLed) statusLed.classList.remove('locked');
+        if (proceedBtn) {
+          proceedBtn.removeAttribute('disabled');
+          proceedBtn.classList.remove('locked-btn');
+        }
+        if (passwordInput) {
+          passwordInput.value = '';
+          passwordInput.disabled = true;
+          passwordInput.placeholder = 'AUTHENTICATED // ACCESS GRANTED';
+        }
+        audio.successChime();
+        triggerGlitchSuccessFlash();
+        showToast('ROUND 1 COMPLETE // RECONNAISSANCE SUCCESSFUL', 'success');
+      } else {
+        round1Completed = false;
+        if (errBanner) errBanner.classList.remove('hidden');
+        if (succBanner) succBanner.classList.add('hidden');
+        if (statusText) {
+          statusText.textContent = `STATUS: INCORRECT ATTEMPT LOGGED (${data.attempts} ATTEMPTS)`;
+        }
+        if (statusLed) statusLed.classList.add('locked');
+        if (proceedBtn) {
+          proceedBtn.setAttribute('disabled', 'true');
+          proceedBtn.classList.add('locked-btn');
+        }
+        audio.errorBuzz();
+        showToast('INCORRECT PASSWORD — TRY AGAIN', 'error');
+        if (passwordInput) {
+          passwordInput.focus();
+          passwordInput.select();
+        }
+      }
+    } catch (err) {
+      console.error('Round 1 verification network error:', err);
+      showToast('NETWORK ERROR: Unable to reach verification server', 'error');
+      audio.errorBuzz();
+    }
+  }
+
+  function initRound1Recon() {
+    // Populate or sync team selector
+    const teamSelect = document.getElementById('teamSelect');
+    if (teamSelect) {
+      // Fetch available teams list to ensure dropdown matches server state
+      fetch('/api/teams')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.teams) {
+            teamSelect.innerHTML = '';
+            data.teams.forEach(t => {
+              const opt = document.createElement('option');
+              opt.value = t.teamId;
+              opt.textContent = t.teamName;
+              teamSelect.appendChild(opt);
+            });
+            const newOpt = document.createElement('option');
+            newOpt.value = '__new__';
+            newOpt.textContent = '+ New Team...';
+            teamSelect.appendChild(newOpt);
+
+            teamSelect.value = activeTeamId;
+            if (!teamSelect.value && data.teams.length > 0) {
+              teamSelect.value = data.teams[0].teamId;
+              activeTeamId = data.teams[0].teamId;
+            }
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          loadRound1Status();
+        });
+
+      teamSelect.addEventListener('change', async (e) => {
+        const val = e.target.value;
+        if (val === '__new__') {
+          const newName = prompt('Enter New Team Name (e.g. Team Delta):');
+          if (newName && newName.trim()) {
+            const cleanId = 'team-' + newName.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
+            try {
+              const res = await fetch('/api/team/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ teamId: cleanId, teamName: newName.trim() })
+              });
+              const data = await res.json();
+              if (data.success) {
+                const opt = document.createElement('option');
+                opt.value = cleanId;
+                opt.textContent = data.teamName;
+                teamSelect.insertBefore(opt, teamSelect.querySelector('option[value="__new__"]'));
+                teamSelect.value = cleanId;
+                activeTeamId = cleanId;
+                try { localStorage.setItem('r1_active_team', cleanId); } catch (_) {}
+                showToast(`Switched to ${data.teamName}`, 'info');
+                await loadRound1Status();
+                return;
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          }
+          teamSelect.value = activeTeamId;
+          return;
+        }
+
+        activeTeamId = val;
+        try { localStorage.setItem('r1_active_team', val); } catch (_) {}
+        const selName = teamSelect.options[teamSelect.selectedIndex].text;
+        showToast(`Active team: ${selName}`, 'info');
+        await loadRound1Status();
+      });
+    } else {
+      loadRound1Status();
+    }
+
+    // Password submission form
+    const form = document.getElementById('round1Form');
+    const passwordInput = document.getElementById('round1PasswordInput');
+    const submitBtn = document.getElementById('round1SubmitBtn');
+
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pwd = passwordInput ? passwordInput.value : '';
+        submitRound1Password(pwd);
+      });
+    }
+
+    if (submitBtn && form) {
+      submitBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const pwd = passwordInput ? passwordInput.value : '';
+        submitRound1Password(pwd);
+      });
+    }
+
+    // Proceed to Round 2 button
     const proceedBtn = document.getElementById('proceedToRound2Btn');
     if (proceedBtn) {
       proceedBtn.addEventListener('click', () => {
+        if (!round1Completed && !adminOverrideActive) {
+          showToast('Complete Round 1 Reconnaissance first.', 'error');
+          audio.errorBuzz();
+          return;
+        }
         goToSection(3);
       });
     }
@@ -1588,6 +1816,7 @@
           if (authFeedback) authFeedback.textContent = '';
           audio.successChime();
           showToast('✓ ORGANIZER CONSOLE AUTHORIZED', 'success');
+          renderAdminTeamsTelemetry();
         } else {
           audio.errorBuzz();
           if (authFeedback) {
@@ -1598,6 +1827,72 @@
             passphraseInput.focus();
           }
         }
+      });
+    }
+
+    // Round 1 Live Teams Telemetry Renderer
+    async function renderAdminTeamsTelemetry() {
+      const tbody = document.getElementById('adminTeamsTableBody');
+      if (!tbody) return;
+      try {
+        const res = await fetch('/api/admin/teams');
+        if (!res.ok) return;
+        const data = await res.json();
+        tbody.innerHTML = '';
+        if (!data.teams || data.teams.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-dim">No teams registered</td></tr>';
+          return;
+        }
+        data.teams.forEach(t => {
+          const tr = document.createElement('tr');
+          const statusHtml = t.completed 
+            ? '<span class="text-green" style="font-weight:700">✓ COMPLETED</span>' 
+            : '<span class="text-dim">IN PROGRESS</span>';
+          const completedAtText = t.completedAt ? escapeHtml(t.completedAt) : '--';
+          tr.innerHTML = `
+            <td><strong>${escapeHtml(t.teamName)}</strong> <span class="text-dim">(${escapeHtml(t.teamId)})</span></td>
+            <td>${statusHtml}</td>
+            <td>${t.attempts}</td>
+            <td>${completedAtText}</td>
+            <td><button type="button" class="cyber-button sm" data-reset-team-id="${escapeHtml(t.teamId)}">RESET</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // Bind reset buttons
+        tbody.querySelectorAll('[data-reset-team-id]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const teamIdToReset = btn.getAttribute('data-reset-team-id');
+            try {
+              const resetRes = await fetch('/api/admin/reset-team', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ teamId: teamIdToReset })
+              });
+              const resetData = await resetRes.json();
+              if (resetData.success) {
+                showToast(`✓ Reset progress for ${teamIdToReset}`, 'info');
+                renderAdminTeamsTelemetry();
+                if (teamIdToReset === activeTeamId) {
+                  loadRound1Status();
+                }
+              }
+            } catch (e) {
+              console.error(e);
+            }
+          });
+        });
+      } catch (e) {
+        console.warn('Failed to load admin telemetry:', e);
+        tbody.innerHTML = '<tr><td colspan="5" class="text-red">Telemetry fetch error</td></tr>';
+      }
+    }
+
+    const refreshTeamsBtn = document.getElementById('adminRefreshTeamsBtn');
+    if (refreshTeamsBtn) {
+      refreshTeamsBtn.addEventListener('click', () => {
+        renderAdminTeamsTelemetry();
+        showToast('Telemetry refreshed', 'info');
       });
     }
 
@@ -1638,6 +1933,7 @@
     const forceUnlockR3Btn = document.getElementById('adminForceUnlockR3Btn');
     if (forceUnlockR3Btn) {
       forceUnlockR3Btn.addEventListener('click', () => {
+        adminOverrideActive = true;
         const revealCard = document.getElementById('caseIdRevealCard');
         if (revealCard) revealCard.classList.remove('hidden');
         closeConsole();
@@ -1654,12 +1950,13 @@
     jumpButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const target = btn.getAttribute('data-jump');
+        adminOverrideActive = true;
         if (target === 'victory') {
           showVictoryScreen();
         } else {
           const victoryOverlay = document.getElementById('victoryOverlay');
           if (victoryOverlay) victoryOverlay.classList.add('hidden');
-          goToSection(parseInt(target, 10));
+          goToSection(parseInt(target, 10), true);
         }
         closeConsole();
       });
@@ -1688,7 +1985,7 @@
     const beginBtn = document.getElementById('beginInvestigationBtn');
     if (beginBtn) {
       beginBtn.addEventListener('click', () => {
-        goToSection(2); // Jump to Round 1: Dossier
+        goToSection(2); // Jump to Round 1: Reconnaissance
       });
     }
 
@@ -1705,8 +2002,13 @@
     trackerSteps.forEach(step => {
       step.addEventListener('click', () => {
         const stepNum = parseInt(step.getAttribute('data-step'));
+        if (stepNum >= 3 && !round1Completed && !adminOverrideActive) {
+          showToast('ACCESS DENIED: Complete Round 1 Reconnaissance first.', 'error');
+          audio.errorBuzz();
+          return;
+        }
         // Allow navigation to visited or unlocked steps
-        if (step.classList.contains('completed') || step.classList.contains('active') || stepNum <= currentStage) {
+        if (step.classList.contains('completed') || step.classList.contains('active') || stepNum <= currentStage || adminOverrideActive) {
           goToSection(stepNum);
         }
       });
@@ -1737,7 +2039,7 @@
     }
     initMatrixRain();
     runBootSequence();
-    initDossier();
+    initRound1Recon();
     initMailbox();
     initPasswordTerminal();
     initAiChallenge();
@@ -1746,10 +2048,14 @@
 
     const hash = window.location.hash.toLowerCase();
     if (hash === '#round2' || hash === '#mailbox') {
-      goToSection(3);
-      const firstItem = document.querySelector('.email-item');
-      if (firstItem) firstItem.click();
-    } else if (hash === '#round1' || hash === '#dossier') {
+      if (round1Completed || adminOverrideActive) {
+        goToSection(3);
+        const firstItem = document.querySelector('.email-item');
+        if (firstItem) firstItem.click();
+      } else {
+        goToSection(2);
+      }
+    } else if (hash === '#round1' || hash === '#recon' || hash === '#dossier') {
       goToSection(2);
     } else if (hash === '#round3' || hash === '#terminal') {
       goToSection(4);

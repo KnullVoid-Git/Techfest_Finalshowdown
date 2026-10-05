@@ -1,0 +1,29 @@
+{
+  "team-alpha": {
+    "teamId": "team-alpha",
+    "teamName": "Team Alpha",
+    "round1": {
+      "completed": false,
+      "attempts": 0,
+      "completedAt": null
+    }
+  },
+  "team-beta": {
+    "teamId": "team-beta",
+    "teamName": "Team Beta",
+    "round1": {
+      "completed": false,
+      "attempts": 0,
+      "completedAt": null
+    }
+  },
+  "team-gamma": {
+    "teamId": "team-gamma",
+    "teamName": "Team Gamma",
+    "round1": {
+      "completed": false,
+      "attempts": 0,
+      "completedAt": null
+    }
+  }
+}

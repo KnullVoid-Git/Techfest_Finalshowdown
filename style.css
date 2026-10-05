@@ -255,6 +255,40 @@ html, body {
   box-shadow: 0 0 8px var(--neon-green-glow);
 }
 
+/* Team Session Pill */
+.team-session-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid var(--border-cyan);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.team-pill-icon {
+  font-size: 0.85rem;
+}
+.team-pill-label {
+  font-size: 0.7rem;
+  color: var(--neon-cyan);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.team-pill-select {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+.team-pill-select option {
+  background: #0d120e;
+  color: var(--text-main);
+}
+
 .sys-status-badge {
   font-size: 0.75rem;
   padding: 4px 8px;
@@ -680,123 +714,290 @@ html, body {
 }
 
 /* ==========================================================================
-   SECTION 2: ROUND 1 — RECON DOSSIER STYLES
+   SECTION 2: ROUND 1 — RECONNAISSANCE STYLES
    ========================================================================== */
-.dossier-card {
-  position: relative;
-  overflow: hidden;
-  padding: 30px;
-  background: rgba(12, 16, 13, 0.92);
+.recon-layout {
+  max-width: 1380px;
+  padding: 16px 30px;
+  gap: 14px;
 }
 
-.dossier-watermark {
+.recon-brand-tag {
+  font-size: 0.72rem;
+  color: var(--neon-cyan);
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.recon-subtitle {
+  font-size: 0.85rem;
+  color: var(--neon-green);
+  letter-spacing: 3px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.recon-card {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 24px;
+  background: rgba(12, 16, 13, 0.94);
+}
+
+.recon-watermark {
   position: absolute;
-  top: 40%;
+  top: 35%;
   left: 50%;
-  transform: translate(-50%, -50%) rotate(-25deg);
-  font-size: clamp(4rem, 9vw, 9rem);
+  transform: translate(-50%, -50%) rotate(-15deg);
+  font-size: clamp(5rem, 12vw, 12rem);
   font-weight: 900;
-  color: rgba(57, 255, 20, 0.03);
+  color: rgba(57, 255, 20, 0.025);
   pointer-events: none;
   user-select: none;
-  letter-spacing: 15px;
+  letter-spacing: 20px;
   white-space: nowrap;
 }
 
-.dossier-meta-grid {
+.recon-intel-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recon-intel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-dim);
+  padding-bottom: 6px;
+}
+
+.intel-tag {
+  color: var(--neon-cyan);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.intel-title {
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+/* 11 Items Dossier Grid */
+.recon-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 12px 14px;
   border: 1px solid var(--border-dim);
 }
 
-.meta-item {
+.recon-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 8px 10px;
+  background: rgba(15, 22, 17, 0.6);
+  border: 1px solid rgba(57, 255, 20, 0.12);
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.meta-label {
-  font-size: 0.7rem;
+.recon-item:hover {
+  border-color: var(--neon-green-dim);
+  background: rgba(15, 22, 17, 0.85);
+}
+
+.recon-item.span-full {
+  grid-column: 1 / -1;
+}
+
+.recon-label {
+  font-size: 0.68rem;
   color: var(--text-dim);
   letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
-.meta-value {
-  font-size: 0.85rem;
+.recon-value {
+  font-size: 0.9rem;
   font-weight: 700;
+  word-break: break-word;
 }
 
-.dossier-divider {
+.recon-divider {
   border: none;
   border-top: 1px dashed var(--border-neon);
-  margin: 10px 0 24px 0;
+  margin: 16px 0;
   opacity: 0.6;
 }
 
-.dossier-body {
-  max-height: 52vh;
-  overflow-y: auto;
-  padding-right: 16px;
+/* Mission Challenge Section */
+.recon-mission-card {
+  background: rgba(7, 12, 8, 0.85);
+  border: 1px solid var(--border-neon);
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 10px;
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.06);
 }
 
-.dossier-block p {
-  color: var(--text-main);
-  margin-bottom: 12px;
-  font-size: 0.95rem;
-  line-height: 1.7;
+.mission-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.block-title {
-  color: var(--neon-cyan);
-  font-size: 0.95rem;
+.mission-tag {
+  color: var(--neon-green);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 1px;
-  margin-bottom: 8px;
 }
 
-/* Redacted Bars Effect */
-.redacted {
-  background-color: #000;
-  color: transparent;
-  padding: 0 8px;
-  margin: 0 3px;
-  border: 1px solid rgba(57, 255, 20, 0.3);
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.9);
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.3s ease;
-  position: relative;
-  display: inline-block;
+.mission-title {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 2px;
 }
 
-.redacted:hover,
-.redacted.revealed {
-  color: var(--neon-green);
-  background-color: rgba(57, 255, 20, 0.12);
-  border-color: var(--neon-green);
-  box-shadow: 0 0 10px var(--neon-green-glow);
+.mission-instruction {
+  color: var(--text-main);
+  font-size: 0.92rem;
+  line-height: 1.6;
 }
 
-.dossier-list {
-  list-style: none;
+.mission-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
   margin-top: 6px;
 }
 
-.dossier-list li {
-  font-size: 0.9rem;
-  color: var(--text-main);
+.mission-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
+.mission-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  letter-spacing: 1.5px;
+}
+
+.mission-input-row {
+  display: flex;
+  gap: 12px;
+  max-width: 600px;
+}
+
+.r1-input {
+  flex: 1;
+  background: rgba(5, 8, 6, 0.95);
+  border: 1px solid var(--border-neon);
+  color: var(--neon-green);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  letter-spacing: 1.5px;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.r1-input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px var(--neon-cyan-glow);
+}
+
+/* Feedback Banners */
+.r1-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  max-width: 600px;
+  border-radius: 2px;
+  animation: banner-pop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes banner-pop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.r1-banner.r1-error {
+  background: rgba(45, 10, 14, 0.8);
+  border: 1px solid var(--neon-red);
+  box-shadow: 0 0 12px var(--neon-red-glow);
+}
+
+.r1-banner.r1-error .r1-banner-icon {
+  color: var(--neon-red);
+  font-size: 1.4rem;
+}
+
+.r1-banner.r1-error .r1-banner-title {
+  color: var(--neon-red);
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 1.5px;
+}
+
+.r1-banner.r1-error .r1-banner-sub {
+  color: #ff99aa;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+}
+
+.r1-banner.r1-success {
+  background: rgba(14, 38, 20, 0.85);
+  border: 1px solid var(--neon-green);
+  box-shadow: 0 0 16px var(--neon-green-glow);
+}
+
+.r1-banner.r1-success .r1-banner-icon {
+  color: var(--neon-green);
+  font-size: 1.4rem;
+}
+
+.r1-banner.r1-success .r1-banner-title {
+  color: var(--neon-green);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 1.5px;
+}
+
+.r1-banner.r1-success .r1-banner-sub {
+  color: #a8ffa8;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+}
+
+/* Locked Button State */
+.cyber-button.locked-btn {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: rgba(120, 120, 120, 0.4);
+  color: #888;
+  box-shadow: none;
+}
+.cyber-button.locked-btn:hover {
+  background: transparent;
+  color: #888;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Dossier Footer Actions */
 .dossier-footer {
   margin-top: 24px;
   padding-top: 20px;
@@ -822,6 +1023,10 @@ html, body {
   border-radius: 50%;
   background: var(--neon-green);
   box-shadow: 0 0 8px var(--neon-green);
+}
+.status-indicator-led.locked {
+  background: var(--neon-yellow);
+  box-shadow: 0 0 8px var(--neon-yellow);
 }
 
 /* ==========================================================================
@@ -2352,6 +2557,58 @@ html, body {
   letter-spacing: 1px;
 }
 
+/* Admin Round 1 Telemetry */
+.admin-telemetry-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 12px;
+  border: 1px solid var(--border-dim);
+}
+
+.admin-subhead {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.admin-table-wrapper {
+  overflow-x: auto;
+  max-height: 220px;
+}
+
+.admin-teams-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  text-align: left;
+}
+
+.admin-teams-table th {
+  padding: 8px 10px;
+  background: rgba(20, 28, 22, 0.9);
+  color: var(--neon-cyan);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-neon);
+  letter-spacing: 1px;
+}
+
+.admin-teams-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(57, 255, 20, 0.12);
+  color: var(--text-main);
+}
+
+.admin-teams-table tr:hover td {
+  background: rgba(57, 255, 20, 0.05);
+}
+
+.admin-table-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .admin-actions-grid {
   display: flex;
   flex-direction: column;
@@ -2418,5 +2675,12 @@ html, body {
   }
   .dossier-meta-grid {
     grid-template-columns: 1fr;
+  }
+  .recon-grid {
+    grid-template-columns: 1fr;
+  }
+  .mission-input-row {
+    flex-direction: column;
+    max-width: 100%;
   }
 }
