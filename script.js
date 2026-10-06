@@ -18,8 +18,18 @@
   'use strict';
 
   // ==========================================================================
-  // 1. CRYPTOGRAPHIC PRECOMPUTED HASHES (Zero Plaintext Secrets in Source)
+  // 1. CONFIG: SPONSOR CHECKPOINT CONSTANTS & PRECOMPUTED HASHES
   // ==========================================================================
+  const IG_URL = "https://www.instagram.com/kapidhwaj.innovations/";
+  const IG_HANDLE = "@kapidhwaj.innovations";
+  const MIN_AWAY_SECONDS = 10;
+  const REQUIRE_PROOF_CODE = true;
+  const REQUIRE_HANDLES = true;
+  const PROOF_HASH = "b4fcf04c8e6aa45ab3f5c3262b57015142cb34d11430d2acd651e8d74580a14d";
+
+  const STORAGE_KEY_CHECKPOINT = 'bo_sponsor_checkpoint';
+  const STORAGE_KEY_COLLECTED_HANDLES = 'bo_collected_ig_handles';
+
   const MAX_ATTEMPTS = 3;
   const STORAGE_KEY_ATTEMPTS = 'bo_r2_attempts';
   const STORAGE_KEY_FOLDERS = 'bo_r2_folders';
@@ -352,6 +362,7 @@
   const sections = {
     1: document.getElementById('section-boot'),
     2: document.getElementById('section-round1'),
+    'checkpoint': document.getElementById('section-checkpoint'),
     3: document.getElementById('section-round2'),
     4: document.getElementById('section-round3'),
     5: document.getElementById('section-round4')
@@ -361,13 +372,40 @@
   let round1Completed = false;
   let adminOverrideActive = false;
 
+  function isCheckpointPassed() {
+    if (adminOverrideActive) return true;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY_CHECKPOINT);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return Boolean(parsed.passed);
+      }
+    } catch (_) {}
+    return false;
+  }
+
   function goToSection(stageNum, bypassLock = false) {
     if (!sections[stageNum]) return;
 
-    if (stageNum >= 3 && !round1Completed && !adminOverrideActive && !bypassLock) {
-      showToast('ACCESS DENIED: Complete Round 1 Reconnaissance first.', 'error');
-      audio.errorBuzz();
-      return;
+    // Strict Stage & Checkpoint Guards
+    if (stageNum === 'checkpoint') {
+      if (!round1Completed && !adminOverrideActive && !bypassLock) {
+        showToast('ACCESS DENIED: Complete Round 1 Reconnaissance first.', 'error');
+        audio.errorBuzz();
+        return;
+      }
+    } else if (stageNum === 3 || stageNum === '3' || stageNum === 4 || stageNum === '4' || stageNum === 5 || stageNum === '5') {
+      if (!round1Completed && !adminOverrideActive && !bypassLock) {
+        showToast('ACCESS DENIED: Complete Round 1 Reconnaissance first.', 'error');
+        audio.errorBuzz();
+        return;
+      }
+      if (!isCheckpointPassed() && !adminOverrideActive && !bypassLock) {
+        showToast('SPONSOR CHECKPOINT REQUIRED // CHANNEL ENCRYPTED', 'warning');
+        audio.errorBuzz();
+        goToSection('checkpoint');
+        return;
+      }
     }
 
     currentStage = stageNum;
@@ -375,8 +413,8 @@
     // Update section visibility
     Object.keys(sections).forEach(key => {
       const sec = sections[key];
-      const stageKey = parseInt(key, 10);
-      if (stageKey === stageNum) {
+      const isTarget = (String(key) === String(stageNum));
+      if (isTarget) {
         sec.classList.add('active');
         if (window.gsap) {
           gsap.set(sec, { clearProps: 'all' });
@@ -386,7 +424,7 @@
             duration: 0.35, 
             ease: 'power2.out',
             onComplete: () => {
-              if (stageKey === 3) {
+              if (String(stageNum) === '3') {
                 gsap.set(sec, { clearProps: 'transform' });
               }
             }
@@ -407,7 +445,7 @@
       }
     });
 
-    if (stageNum === 3) {
+    if (String(stageNum) === '3') {
       const readingPane = document.getElementById('readingPane');
       if (readingPane) readingPane.scrollTop = 0;
       const emailList = document.getElementById('emailListContainer');
@@ -417,14 +455,38 @@
     // Update HUD round tracker
     const steps = document.querySelectorAll('.tracker-step');
     steps.forEach(step => {
-      const stepIdx = parseInt(step.getAttribute('data-step'));
+      const stepIdx = parseInt(step.getAttribute('data-step'), 10);
       step.classList.remove('active', 'completed');
-      if (stepIdx === stageNum) {
-        step.classList.add('active');
-      } else if (stepIdx < stageNum) {
-        step.classList.add('completed');
+      if (stageNum === 'checkpoint') {
+        if (stepIdx <= 2) {
+          step.classList.add('completed');
+        }
+      } else {
+        const numStage = parseInt(stageNum, 10);
+        if (stepIdx === numStage) {
+          step.classList.add('active');
+        } else if (stepIdx < numStage) {
+          step.classList.add('completed');
+        }
       }
     });
+
+    // Update URL hash for deep link guarding
+    try {
+      if (stageNum === 'checkpoint') {
+        if (window.location.hash !== '#checkpoint') history.replaceState(null, '', '#checkpoint');
+      } else if (stageNum === 1 || stageNum === '1') {
+        if (window.location.hash !== '#boot') history.replaceState(null, '', '#boot');
+      } else if (stageNum === 2 || stageNum === '2') {
+        if (window.location.hash !== '#round1') history.replaceState(null, '', '#round1');
+      } else if (stageNum === 3 || stageNum === '3') {
+        if (window.location.hash !== '#round2') history.replaceState(null, '', '#round2');
+      } else if (stageNum === 4 || stageNum === '4') {
+        if (window.location.hash !== '#round3') history.replaceState(null, '', '#round3');
+      } else if (stageNum === 5 || stageNum === '5') {
+        if (window.location.hash !== '#round4') history.replaceState(null, '', '#round4');
+      }
+    } catch (_) {}
 
     audio.keyClick();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -828,7 +890,7 @@
       });
     }
 
-    // Proceed to Round 2 button
+    // Proceed to Round 2 button (Now routes through Sponsor Checkpoint)
     const proceedBtn = document.getElementById('proceedToRound2Btn');
     if (proceedBtn) {
       proceedBtn.addEventListener('click', () => {
@@ -837,12 +899,688 @@
           audio.errorBuzz();
           return;
         }
-        goToSection(3);
+        if (isCheckpointPassed()) {
+          goToSection(3);
+        } else {
+          goToSection('checkpoint');
+        }
       });
     }
 
     // Initial status render
     loadRound1Status();
+  }
+
+  // ==========================================================================
+  // 7B. SPONSOR CHECKPOINT: INTEL PARTNER VERIFICATION CONTROLLER
+  // ==========================================================================
+  function initSponsorCheckpoint() {
+    // DOM Elements
+    const openInstagramBtn = document.getElementById('openInstagramBtn');
+    const igPopupFallback = document.getElementById('igPopupFallback');
+    const step1CheckIcon = document.getElementById('step1CheckIcon');
+    const step1StatusTag = document.getElementById('step1StatusTag');
+    const step1Item = document.getElementById('checkpointStep1');
+
+    const step2CheckIcon = document.getElementById('step2CheckIcon');
+    const step2Item = document.getElementById('checkpointStep2');
+    const awayScanBox = document.getElementById('awayScanBox');
+    const awayStatusMsg = document.getElementById('awayStatusMsg');
+
+    const teamHandleInputs = [
+      document.getElementById('teamHandleInput1'),
+      document.getElementById('teamHandleInput2'),
+      document.getElementById('teamHandleInput3'),
+      document.getElementById('teamHandleInput4')
+    ];
+    const handlesFeedback = document.getElementById('handlesFeedback');
+    const step3CheckIcon = document.getElementById('step3CheckIcon');
+    const step3Item = document.getElementById('checkpointStep3');
+
+    const sponsorProofForm = document.getElementById('sponsorProofForm');
+    const sponsorProofCodeInput = document.getElementById('sponsorProofCodeInput');
+    const sponsorProofSubmitBtn = document.getElementById('sponsorProofSubmitBtn');
+    const sponsorProofFeedback = document.getElementById('sponsorProofFeedback');
+    const step4CheckIcon = document.getElementById('step4CheckIcon');
+    const step4Item = document.getElementById('checkpointStep4');
+
+    const sponsorFollowCheckbox = document.getElementById('sponsorFollowCheckbox');
+    const step5CheckIcon = document.getElementById('step5CheckIcon');
+    const step5Item = document.getElementById('checkpointStep5');
+
+    const checkpointStepsCompletedCount = document.getElementById('checkpointStepsCompletedCount');
+    const continueToRound2Btn = document.getElementById('continueToRound2Btn');
+    const checkpointStatusLed = document.getElementById('checkpointStatusLed');
+    const checkpointStatusText = document.getElementById('checkpointStatusText');
+
+    // Runtime tracking variables
+    let lastIgClickTime = 0;
+    let tabHiddenStartTime = 0;
+    let isScanningAway = false;
+    let proofCooldownActive = false;
+
+    // Helper: Normalize proof code (uppercase, strip non-alphanumeric)
+    function normalizeProofCode(code) {
+      return (code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
+    // Helper: Clean handle (strip optional leading @ and whitespace)
+    function cleanHandle(val) {
+      if (!val) return '';
+      let trimmed = val.trim();
+      if (trimmed.startsWith('@')) {
+        trimmed = trimmed.substring(1).trim();
+      }
+      return trimmed;
+    }
+
+    // Handle regex: only letters, numbers, periods, and underscores, up to 30 chars
+    const HANDLE_REGEX = /^[a-zA-Z0-9._]{1,30}$/;
+
+    // State Accessors
+    function getCheckpointState() {
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY_CHECKPOINT);
+        if (raw) return JSON.parse(raw);
+      } catch (_) {}
+      return {
+        passed: false,
+        step1: false,
+        step2: false,
+        step3: false,
+        handles: ['', '', '', ''],
+        step4: false,
+        step5: false
+      };
+    }
+
+    function saveCheckpointState(state) {
+      try {
+        sessionStorage.setItem(STORAGE_KEY_CHECKPOINT, JSON.stringify(state));
+      } catch (_) {}
+    }
+
+    // Audit storage for Organizer Console
+    function saveCollectedHandlesAudit(handlesArray) {
+      const activeHandles = (handlesArray || []).filter(h => Boolean(h && h.trim()));
+      if (activeHandles.length === 0) return;
+      try {
+        let list = [];
+        const raw = sessionStorage.getItem(STORAGE_KEY_COLLECTED_HANDLES);
+        if (raw) list = JSON.parse(raw);
+        const existingIdx = list.findIndex(entry => entry.teamId === activeTeamId);
+        const now = new Date();
+        const timeStr = String(now.getUTCHours()).padStart(2, '0') + ':' +
+                        String(now.getUTCMinutes()).padStart(2, '0') + ':' +
+                        String(now.getUTCSeconds()).padStart(2, '0') + ' UTC';
+        const record = {
+          teamId: activeTeamId || 'TEAM-ALPHA',
+          teamName: activeTeamId || 'Team Alpha',
+          handles: activeHandles,
+          timestamp: timeStr
+        };
+        if (existingIdx >= 0) {
+          list[existingIdx] = record;
+        } else {
+          list.push(record);
+        }
+        sessionStorage.setItem(STORAGE_KEY_COLLECTED_HANDLES, JSON.stringify(list));
+      } catch (_) {}
+    }
+
+    // Check overall progress and update Continue button state
+    function updateOverallProgress() {
+      const state = getCheckpointState();
+      const enabledSteps = [
+        state.step1,
+        state.step2,
+        REQUIRE_HANDLES ? state.step3 : true,
+        REQUIRE_PROOF_CODE ? state.step4 : true,
+        state.step5
+      ];
+
+      const completedCount = enabledSteps.filter(Boolean).length;
+      const totalCount = enabledSteps.length;
+
+      if (checkpointStepsCompletedCount) {
+        checkpointStepsCompletedCount.textContent = `${completedCount}/${totalCount}`;
+      }
+
+      const allDone = (completedCount === totalCount);
+
+      if (continueToRound2Btn) {
+        if (allDone) {
+          continueToRound2Btn.removeAttribute('disabled');
+          continueToRound2Btn.classList.remove('locked-btn');
+          if (checkpointStatusLed) {
+            checkpointStatusLed.className = 'pill-dot green-dot';
+          }
+          if (checkpointStatusText) {
+            checkpointStatusText.textContent = 'CHANNEL READY // ACCESS AUTHORIZED';
+            checkpointStatusText.className = 'text-green';
+          }
+        } else {
+          continueToRound2Btn.setAttribute('disabled', 'true');
+          continueToRound2Btn.classList.add('locked-btn');
+          if (checkpointStatusLed) {
+            checkpointStatusLed.className = 'pill-dot red-dot';
+          }
+          if (checkpointStatusText) {
+            checkpointStatusText.textContent = 'CHANNEL ENCRYPTED';
+            checkpointStatusText.className = 'text-red';
+          }
+        }
+      }
+    }
+
+    // --- STEP 1: OPEN INSTAGRAM ---
+    function markStep1Done() {
+      const state = getCheckpointState();
+      state.step1 = true;
+      saveCheckpointState(state);
+
+      if (step1CheckIcon) {
+        step1CheckIcon.textContent = '✓';
+        step1CheckIcon.className = 'step-check ticked';
+      }
+      if (step1StatusTag) {
+        step1StatusTag.textContent = 'TRANSMITTED // LINK OPENED';
+        step1StatusTag.className = 'step-status-tag text-green';
+      }
+      if (step1Item) step1Item.classList.add('ticked');
+      updateOverallProgress();
+    }
+
+    function handleOpenInstagram() {
+      lastIgClickTime = Date.now();
+      tabHiddenStartTime = 0;
+
+      if (step1StatusTag) {
+        step1StatusTag.textContent = 'TRANSMITTING // AWAITING RETURN';
+        step1StatusTag.className = 'step-status-tag text-yellow';
+      }
+      if (awayStatusMsg && !getCheckpointState().step2) {
+        awayStatusMsg.innerHTML = '<span class="text-yellow">Telemetry stream active. Follow @kapidhwaj.innovations on Instagram, then return to this tab...</span>';
+      }
+
+      let popupBlocked = false;
+      try {
+        const win = window.open(IG_URL, '_blank', 'noopener,noreferrer');
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+          popupBlocked = true;
+        }
+      } catch (e) {
+        popupBlocked = true;
+      }
+
+      if (popupBlocked && igPopupFallback) {
+        igPopupFallback.classList.remove('hidden');
+      } else if (igPopupFallback) {
+        igPopupFallback.classList.add('hidden');
+      }
+
+      markStep1Done();
+      audio.keyClick();
+    }
+
+    if (openInstagramBtn) {
+      openInstagramBtn.addEventListener('click', handleOpenInstagram);
+    }
+
+    // Support clicking fallback link
+    if (igPopupFallback) {
+      const fallbackLink = igPopupFallback.querySelector('a');
+      if (fallbackLink) {
+        fallbackLink.addEventListener('click', () => {
+          lastIgClickTime = Date.now();
+          tabHiddenStartTime = 0;
+          markStep1Done();
+        });
+      }
+    }
+
+    // --- STEP 2: AWAY CHECK (VISIBILITY CHANGE TELEMETRY) ---
+    document.addEventListener('visibilitychange', () => {
+      const state = getCheckpointState();
+      if (state.step2 || isScanningAway) return;
+
+      if (document.visibilityState === 'hidden') {
+        if (lastIgClickTime > 0) {
+          tabHiddenStartTime = Date.now();
+        }
+      } else if (document.visibilityState === 'visible') {
+        if (lastIgClickTime > 0 && tabHiddenStartTime > 0) {
+          const hiddenSeconds = (Date.now() - tabHiddenStartTime) / 1000;
+          tabHiddenStartTime = 0; // Prevent duplicate triggers
+
+          if (hiddenSeconds < MIN_AWAY_SECONDS) {
+            // Returned too soon
+            audio.errorBuzz();
+            if (awayStatusMsg) {
+              awayStatusMsg.innerHTML = '<span class="text-red">SIGNAL NOT CONFIRMED. Follow the account first, then come back.</span>';
+              awayStatusMsg.classList.remove('shake-text');
+              void awayStatusMsg.offsetWidth;
+              awayStatusMsg.classList.add('shake-text');
+            }
+            // Require clicking OPEN INSTAGRAM again
+            state.step1 = false;
+            saveCheckpointState(state);
+            lastIgClickTime = 0;
+
+            if (step1CheckIcon) {
+              step1CheckIcon.textContent = '◻';
+              step1CheckIcon.className = 'step-check';
+            }
+            if (step1StatusTag) {
+              step1StatusTag.textContent = 'RE-TRANSMISSION REQUIRED';
+              step1StatusTag.className = 'step-status-tag text-red';
+            }
+            if (step1Item) step1Item.classList.remove('ticked');
+            updateOverallProgress();
+          } else {
+            // Valid away duration! Play 2-second scan animation
+            isScanningAway = true;
+            if (awayScanBox) awayScanBox.classList.remove('hidden');
+            if (awayStatusMsg) awayStatusMsg.classList.add('hidden');
+            audio.keyClick();
+
+            setTimeout(() => {
+              isScanningAway = false;
+              if (awayScanBox) awayScanBox.classList.add('hidden');
+              if (awayStatusMsg) {
+                awayStatusMsg.classList.remove('hidden');
+                // Strict rule: Success copy says "SIGNAL CONFIRMED", never "FOLLOW VERIFIED"
+                awayStatusMsg.innerHTML = '<span class="text-green">✓ SIGNAL CONFIRMED // TELEMETRY LINK ACTIVE</span>';
+              }
+              state.step2 = true;
+              saveCheckpointState(state);
+
+              if (step2CheckIcon) {
+                step2CheckIcon.textContent = '✓';
+                step2CheckIcon.className = 'step-check ticked';
+              }
+              if (step2Item) step2Item.classList.add('ticked');
+
+              audio.successChime();
+              updateOverallProgress();
+            }, 2000);
+          }
+        }
+      }
+    });
+
+    // --- STEP 3: TEAM INSTAGRAM HANDLES ---
+    function validateAndSyncHandles() {
+      if (!REQUIRE_HANDLES) return true;
+
+      const h1 = cleanHandle(teamHandleInputs[0] ? teamHandleInputs[0].value : '');
+      const h2 = cleanHandle(teamHandleInputs[1] ? teamHandleInputs[1].value : '');
+      const h3 = cleanHandle(teamHandleInputs[2] ? teamHandleInputs[2].value : '');
+      const h4 = cleanHandle(teamHandleInputs[3] ? teamHandleInputs[3].value : '');
+
+      let isValid = true;
+      let errorMsg = '';
+
+      // Member 1 is required
+      if (!h1) {
+        isValid = false;
+      } else if (!HANDLE_REGEX.test(h1)) {
+        isValid = false;
+        errorMsg = 'Member 1 handle invalid (letters, numbers, periods, underscores only, max 30 chars).';
+      }
+
+      // Optional members 2, 3, 4
+      const optionals = [h2, h3, h4];
+      for (let i = 0; i < optionals.length; i++) {
+        const opt = optionals[i];
+        if (opt && !HANDLE_REGEX.test(opt)) {
+          isValid = false;
+          errorMsg = `Member ${i + 2} handle contains invalid characters.`;
+          break;
+        }
+      }
+
+      const state = getCheckpointState();
+      const handlesList = [h1, h2, h3, h4];
+      state.handles = handlesList;
+      state.step3 = isValid;
+      saveCheckpointState(state);
+
+      if (step3CheckIcon) {
+        step3CheckIcon.textContent = isValid ? '✓' : '◻';
+        step3CheckIcon.className = isValid ? 'step-check ticked' : 'step-check';
+      }
+      if (step3Item) {
+        step3Item.classList.toggle('ticked', isValid);
+      }
+
+      if (handlesFeedback) {
+        if (errorMsg) {
+          handlesFeedback.innerHTML = `<span class="text-red">${escapeHtml(errorMsg)}</span>`;
+        } else if (isValid) {
+          handlesFeedback.innerHTML = '<span class="text-green">✓ Valid Instagram team handles registered.</span>';
+        } else {
+          handlesFeedback.innerHTML = 'Accepts letters, numbers, periods, and underscores (max 30 characters).';
+        }
+      }
+
+      if (isValid) {
+        saveCollectedHandlesAudit(handlesList);
+      }
+
+      updateOverallProgress();
+      return isValid;
+    }
+
+    teamHandleInputs.forEach(input => {
+      if (input) {
+        input.addEventListener('input', validateAndSyncHandles);
+        input.addEventListener('blur', validateAndSyncHandles);
+      }
+    });
+
+    // --- STEP 4: PROOF CODE VERIFICATION ---
+    if (sponsorProofForm) {
+      sponsorProofForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!REQUIRE_PROOF_CODE) return;
+        if (proofCooldownActive) return;
+
+        const rawVal = sponsorProofCodeInput ? sponsorProofCodeInput.value : '';
+        const normalized = normalizeProofCode(rawVal);
+
+        if (!normalized) {
+          if (sponsorProofFeedback) {
+            sponsorProofFeedback.innerHTML = '<span class="text-red">Please enter the classified code.</span>';
+          }
+          return;
+        }
+
+        const hash = await computeSha256(normalized);
+        if (hash === PROOF_HASH) {
+          // VALID CODE
+          const state = getCheckpointState();
+          state.step4 = true;
+          saveCheckpointState(state);
+
+          if (step4CheckIcon) {
+            step4CheckIcon.textContent = '✓';
+            step4CheckIcon.className = 'step-check ticked';
+          }
+          if (step4Item) step4Item.classList.add('ticked');
+
+          if (sponsorProofFeedback) {
+            sponsorProofFeedback.innerHTML = '<span class="text-green">✓ KEY VALIDATED // ACCESS AUTHORIZED</span>';
+          }
+          if (sponsorProofCodeInput) {
+            sponsorProofCodeInput.disabled = true;
+          }
+          if (sponsorProofSubmitBtn) {
+            sponsorProofSubmitBtn.disabled = true;
+            const btnTextEl = sponsorProofSubmitBtn.querySelector('.btn-text');
+            if (btnTextEl) btnTextEl.textContent = 'KEY VALIDATED';
+          }
+
+          audio.successChime();
+          updateOverallProgress();
+        } else {
+          // WRONG CODE: Show "INVALID KEY", unlimited retries with 3-second cooldown
+          audio.errorBuzz();
+          if (sponsorProofFeedback) {
+            sponsorProofFeedback.innerHTML = '<span class="text-red">INVALID KEY</span>';
+          }
+          if (sponsorProofCodeInput) {
+            sponsorProofCodeInput.classList.remove('input-error-shake');
+            void sponsorProofCodeInput.offsetWidth;
+            sponsorProofCodeInput.classList.add('input-error-shake');
+          }
+
+          proofCooldownActive = true;
+          if (sponsorProofSubmitBtn) {
+            sponsorProofSubmitBtn.disabled = true;
+            let cooldownSecs = 3;
+            const btnTextEl = sponsorProofSubmitBtn.querySelector('.btn-text');
+            if (btnTextEl) btnTextEl.textContent = `COOLDOWN (${cooldownSecs}s)`;
+
+            const timer = setInterval(() => {
+              cooldownSecs--;
+              if (cooldownSecs > 0) {
+                if (btnTextEl) btnTextEl.textContent = `COOLDOWN (${cooldownSecs}s)`;
+              } else {
+                clearInterval(timer);
+                proofCooldownActive = false;
+                sponsorProofSubmitBtn.disabled = false;
+                if (btnTextEl) btnTextEl.textContent = 'VERIFY CODE';
+              }
+            }, 1000);
+          }
+        }
+      });
+    }
+
+    // --- STEP 5: TEAM ATTESTATION CHECKBOX ---
+    if (sponsorFollowCheckbox) {
+      sponsorFollowCheckbox.addEventListener('change', () => {
+        const isChecked = sponsorFollowCheckbox.checked;
+        const state = getCheckpointState();
+        state.step5 = isChecked;
+        saveCheckpointState(state);
+
+        if (step5CheckIcon) {
+          step5CheckIcon.textContent = isChecked ? '✓' : '◻';
+          step5CheckIcon.className = isChecked ? 'step-check ticked' : 'step-check';
+        }
+        if (step5Item) {
+          step5Item.classList.toggle('ticked', isChecked);
+        }
+
+        if (isChecked) audio.keyClick();
+        updateOverallProgress();
+      });
+    }
+
+    // --- CONTINUE TO ROUND 2 ACTION ---
+    if (continueToRound2Btn) {
+      continueToRound2Btn.addEventListener('click', () => {
+        const state = getCheckpointState();
+        const enabledSteps = [
+          state.step1,
+          state.step2,
+          REQUIRE_HANDLES ? state.step3 : true,
+          REQUIRE_PROOF_CODE ? state.step4 : true,
+          state.step5
+        ];
+
+        if (enabledSteps.filter(Boolean).length < enabledSteps.length && !adminOverrideActive) {
+          showToast('Complete all checkpoint verification steps first.', 'warning');
+          audio.errorBuzz();
+          return;
+        }
+
+        // Mark checkpoint passed permanently in session
+        state.passed = true;
+        saveCheckpointState(state);
+
+        audio.successChime();
+        triggerChannelDecryptedGlitch(() => {
+          goToSection(3);
+        });
+      });
+    }
+
+    function triggerChannelDecryptedGlitch(callback) {
+      const heading = document.querySelector('#section-checkpoint h2');
+      const origText = heading ? heading.getAttribute('data-text') : 'ENCRYPTED CHANNEL LOCKED';
+      if (heading) {
+        heading.setAttribute('data-text', 'CHANNEL DECRYPTED');
+        heading.textContent = 'CHANNEL DECRYPTED';
+        heading.className = 'glitch-text text-green glitch-flicker-trigger';
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'checkpoint-glitch-overlay';
+      document.body.appendChild(overlay);
+
+      if (window.gsap) {
+        gsap.to(overlay, {
+          opacity: 0.9,
+          duration: 0.18,
+          repeat: 3,
+          yoyo: true,
+          onComplete: () => {
+            overlay.remove();
+            if (heading) {
+              heading.setAttribute('data-text', origText);
+              heading.textContent = origText;
+              heading.className = 'glitch-text text-red';
+            }
+            if (callback) callback();
+          }
+        });
+      } else {
+        setTimeout(() => {
+          overlay.remove();
+          if (heading) {
+            heading.setAttribute('data-text', origText);
+            heading.textContent = origText;
+            heading.className = 'glitch-text text-red';
+          }
+          if (callback) callback();
+        }, 800);
+      }
+    }
+
+    // --- RESTORE CHECKPOINT STATE (PAGE REFRESH PERSISTENCE) ---
+    function restoreCheckpointUi() {
+      const state = getCheckpointState();
+
+      if (state.step1) {
+        if (step1CheckIcon) {
+          step1CheckIcon.textContent = '✓';
+          step1CheckIcon.className = 'step-check ticked';
+        }
+        if (step1StatusTag) {
+          step1StatusTag.textContent = 'TRANSMITTED // LINK OPENED';
+          step1StatusTag.className = 'step-status-tag text-green';
+        }
+        if (step1Item) step1Item.classList.add('ticked');
+      }
+
+      if (state.step2) {
+        if (step2CheckIcon) {
+          step2CheckIcon.textContent = '✓';
+          step2CheckIcon.className = 'step-check ticked';
+        }
+        if (awayStatusMsg) {
+          awayStatusMsg.innerHTML = '<span class="text-green">✓ SIGNAL CONFIRMED // TELEMETRY LINK ACTIVE</span>';
+        }
+        if (step2Item) step2Item.classList.add('ticked');
+      }
+
+      if (Array.isArray(state.handles)) {
+        state.handles.forEach((h, idx) => {
+          if (teamHandleInputs[idx]) {
+            teamHandleInputs[idx].value = h || '';
+          }
+        });
+        if (state.step3) {
+          if (step3CheckIcon) {
+            step3CheckIcon.textContent = '✓';
+            step3CheckIcon.className = 'step-check ticked';
+          }
+          if (step3Item) step3Item.classList.add('ticked');
+          if (handlesFeedback) {
+            handlesFeedback.innerHTML = '<span class="text-green">✓ Valid Instagram team handles registered.</span>';
+          }
+        }
+      }
+
+      if (state.step4) {
+        if (step4CheckIcon) {
+          step4CheckIcon.textContent = '✓';
+          step4CheckIcon.className = 'step-check ticked';
+        }
+        if (step4Item) step4Item.classList.add('ticked');
+        if (sponsorProofFeedback) {
+          sponsorProofFeedback.innerHTML = '<span class="text-green">✓ KEY VALIDATED // ACCESS AUTHORIZED</span>';
+        }
+        if (sponsorProofCodeInput) {
+          sponsorProofCodeInput.value = '••••••••••••';
+          sponsorProofCodeInput.disabled = true;
+        }
+        if (sponsorProofSubmitBtn) {
+          sponsorProofSubmitBtn.disabled = true;
+          const btnTextEl = sponsorProofSubmitBtn.querySelector('.btn-text');
+          if (btnTextEl) btnTextEl.textContent = 'KEY VALIDATED';
+        }
+      }
+
+      if (state.step5) {
+        if (sponsorFollowCheckbox) sponsorFollowCheckbox.checked = true;
+        if (step5CheckIcon) {
+          step5CheckIcon.textContent = '✓';
+          step5CheckIcon.className = 'step-check ticked';
+        }
+        if (step5Item) step5Item.classList.add('ticked');
+      }
+
+      updateOverallProgress();
+    }
+
+    // Expose helpers on window for Organizer Panel interaction
+    window._sponsorCheckpoint = {
+      restore: restoreCheckpointUi,
+      reset: () => {
+        sessionStorage.removeItem(STORAGE_KEY_CHECKPOINT);
+        lastIgClickTime = 0;
+        tabHiddenStartTime = 0;
+        if (openInstagramBtn) openInstagramBtn.disabled = false;
+        if (step1CheckIcon) { step1CheckIcon.textContent = '◻'; step1CheckIcon.className = 'step-check'; }
+        if (step1StatusTag) { step1StatusTag.textContent = 'AWAITING TRANSMISSION'; step1StatusTag.className = 'step-status-tag'; }
+        if (step1Item) step1Item.classList.remove('ticked');
+
+        if (step2CheckIcon) { step2CheckIcon.textContent = '◻'; step2CheckIcon.className = 'step-check'; }
+        if (step2Item) step2Item.classList.remove('ticked');
+        if (awayStatusMsg) awayStatusMsg.textContent = 'Signal idle. Click "OPEN INSTAGRAM" above to begin signal transmission.';
+
+        teamHandleInputs.forEach(inp => { if (inp) inp.value = ''; });
+        if (step3CheckIcon) { step3CheckIcon.textContent = '◻'; step3CheckIcon.className = 'step-check'; }
+        if (step3Item) step3Item.classList.remove('ticked');
+        if (handlesFeedback) handlesFeedback.textContent = 'Accepts letters, numbers, periods, and underscores (max 30 characters).';
+
+        if (sponsorProofCodeInput) {
+          sponsorProofCodeInput.value = '';
+          sponsorProofCodeInput.disabled = false;
+        }
+        if (sponsorProofSubmitBtn) {
+          sponsorProofSubmitBtn.disabled = false;
+          const btnTxt = sponsorProofSubmitBtn.querySelector('.btn-text');
+          if (btnTxt) btnTxt.textContent = 'VERIFY CODE';
+        }
+        if (step4CheckIcon) { step4CheckIcon.textContent = '◻'; step4CheckIcon.className = 'step-check'; }
+        if (step4Item) step4Item.classList.remove('ticked');
+        if (sponsorProofFeedback) sponsorProofFeedback.textContent = '';
+
+        if (sponsorFollowCheckbox) sponsorFollowCheckbox.checked = false;
+        if (step5CheckIcon) { step5CheckIcon.textContent = '◻'; step5CheckIcon.className = 'step-check'; }
+        if (step5Item) step5Item.classList.remove('ticked');
+
+        updateOverallProgress();
+      },
+      skip: () => {
+        const state = getCheckpointState();
+        state.passed = true;
+        state.step1 = true;
+        state.step2 = true;
+        state.step3 = true;
+        state.step4 = true;
+        state.step5 = true;
+        saveCheckpointState(state);
+        restoreCheckpointUi();
+      }
+    };
+
+    restoreCheckpointUi();
   }
 
   // ==========================================================================
@@ -2020,6 +2758,7 @@
           audio.successChime();
           showToast('✓ ORGANIZER CONSOLE AUTHORIZED', 'success');
           renderAdminTeamsTelemetry();
+          renderAdminHandlesTable();
         } else {
           audio.errorBuzz();
           if (authFeedback) {
@@ -2116,6 +2855,32 @@
       });
     }
 
+    // Action: Skip Sponsor Checkpoint
+    const skipCheckpointBtn = document.getElementById('adminSkipCheckpointBtn');
+    if (skipCheckpointBtn) {
+      skipCheckpointBtn.addEventListener('click', () => {
+        adminOverrideActive = true;
+        if (window._sponsorCheckpoint && window._sponsorCheckpoint.skip) {
+          window._sponsorCheckpoint.skip();
+        }
+        showToast('✓ Sponsor Checkpoint Skipped via Organizer Override', 'info');
+        audio.successChime();
+      });
+    }
+
+    // Action: Reset Sponsor Checkpoint
+    const resetCheckpointBtn = document.getElementById('adminResetCheckpointBtn');
+    if (resetCheckpointBtn) {
+      resetCheckpointBtn.addEventListener('click', () => {
+        if (window._sponsorCheckpoint && window._sponsorCheckpoint.reset) {
+          window._sponsorCheckpoint.reset();
+        }
+        renderAdminHandlesTable();
+        showToast('↺ Sponsor Checkpoint reset to initial locked state', 'info');
+        audio.errorBuzz();
+      });
+    }
+
     // Action 1: Reset attempts (to 3)
     const resetAttemptsBtn = document.getElementById('adminResetAttemptsBtn');
     if (resetAttemptsBtn) {
@@ -2151,6 +2916,75 @@
       });
     }
 
+    // Sponsor Checkpoint Collected Handles Telemetry Table
+    function renderAdminHandlesTable() {
+      const tbody = document.getElementById('adminHandlesTableBody');
+      if (!tbody) return;
+      try {
+        let list = [];
+        const raw = sessionStorage.getItem(STORAGE_KEY_COLLECTED_HANDLES);
+        if (raw) list = JSON.parse(raw);
+        if (!list || list.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="3" class="text-dim">No Instagram handles recorded yet</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.map(entry => {
+          const handlesFormatted = (entry.handles || []).map(h => `@${escapeHtml(h)}`).join(', ');
+          return `<tr>
+            <td><strong>${escapeHtml(entry.teamName || entry.teamId)}</strong></td>
+            <td><span class="text-cyan">${handlesFormatted}</span></td>
+            <td class="text-dim">${escapeHtml(entry.timestamp)}</td>
+          </tr>`;
+        }).join('');
+      } catch (_) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-red">Error loading handles telemetry</td></tr>';
+      }
+    }
+
+    // Copy Collected Handles as CSV
+    const copyHandlesCsvBtn = document.getElementById('adminCopyHandlesCsvBtn');
+    if (copyHandlesCsvBtn) {
+      copyHandlesCsvBtn.addEventListener('click', () => {
+        try {
+          let list = [];
+          const raw = sessionStorage.getItem(STORAGE_KEY_COLLECTED_HANDLES);
+          if (raw) list = JSON.parse(raw);
+          if (!list || list.length === 0) {
+            showToast('No Instagram handles to copy yet', 'info');
+            return;
+          }
+          let csv = 'Team,Instagram Handles,Timestamp\n';
+          list.forEach(entry => {
+            const teamEsc = '"' + (entry.teamName || entry.teamId).replace(/"/g, '""') + '"';
+            const handlesEsc = '"' + (entry.handles || []).map(h => '@' + h).join('; ').replace(/"/g, '""') + '"';
+            const timeEsc = '"' + (entry.timestamp || '').replace(/"/g, '""') + '"';
+            csv += `${teamEsc},${handlesEsc},${timeEsc}\n`;
+          });
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(csv).then(() => {
+              showToast('✓ Instagram handles copied as CSV', 'success');
+              audio.successChime();
+            }).catch(() => {
+              prompt('Copy CSV manually:', csv);
+            });
+          } else {
+            prompt('Copy CSV manually:', csv);
+          }
+        } catch (_) {
+          showToast('Error exporting CSV', 'error');
+        }
+      });
+    }
+
+    const refreshHandlesBtn = document.getElementById('adminRefreshHandlesBtn');
+    if (refreshHandlesBtn) {
+      refreshHandlesBtn.addEventListener('click', () => {
+        renderAdminHandlesTable();
+        showToast('Handles telemetry refreshed', 'info');
+      });
+    }
+
     // Stage jump buttons
     const jumpButtons = document.querySelectorAll('[data-jump]');
     jumpButtons.forEach(btn => {
@@ -2159,6 +2993,10 @@
         adminOverrideActive = true;
         if (target === 'victory') {
           showVictoryScreen();
+        } else if (target === 'checkpoint') {
+          const victoryOverlay = document.getElementById('victoryOverlay');
+          if (victoryOverlay) victoryOverlay.classList.add('hidden');
+          goToSection('checkpoint', true);
         } else {
           const victoryOverlay = document.getElementById('victoryOverlay');
           if (victoryOverlay) victoryOverlay.classList.add('hidden');
@@ -2207,14 +3045,20 @@
     const trackerSteps = document.querySelectorAll('.tracker-step');
     trackerSteps.forEach(step => {
       step.addEventListener('click', () => {
-        const stepNum = parseInt(step.getAttribute('data-step'));
+        const stepNum = parseInt(step.getAttribute('data-step'), 10);
         if (stepNum >= 3 && !round1Completed && !adminOverrideActive) {
           showToast('ACCESS DENIED: Complete Round 1 Reconnaissance first.', 'error');
           audio.errorBuzz();
           return;
         }
+        if (stepNum >= 3 && !isCheckpointPassed() && !adminOverrideActive) {
+          showToast('SPONSOR CHECKPOINT REQUIRED // CHANNEL ENCRYPTED', 'warning');
+          audio.errorBuzz();
+          goToSection('checkpoint');
+          return;
+        }
         // Allow navigation to visited or unlocked steps
-        if (step.classList.contains('completed') || step.classList.contains('active') || stepNum <= currentStage || adminOverrideActive) {
+        if (step.classList.contains('completed') || step.classList.contains('active') || (typeof currentStage === 'number' && stepNum <= currentStage) || adminOverrideActive) {
           goToSection(stepNum);
         }
       });
@@ -2246,28 +3090,55 @@
     initMatrixRain();
     runBootSequence();
     initRound1Recon();
+    initSponsorCheckpoint();
     initMailbox();
     initPasswordTerminal();
     initAiChallenge();
     initOrganizerOverride();
     initGlobalControls();
 
-    const hash = window.location.hash.toLowerCase();
-    if (hash === '#round2' || hash === '#mailbox') {
-      if (round1Completed || adminOverrideActive) {
-        goToSection(3);
-        const firstItem = document.querySelector('.email-item');
-        if (firstItem) firstItem.click();
-      } else {
+    function handleHashRouting() {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#checkpoint' || hash === '#sponsor') {
+        if (round1Completed || adminOverrideActive) {
+          goToSection('checkpoint');
+        } else {
+          goToSection(2);
+        }
+      } else if (hash === '#round2' || hash === '#mailbox') {
+        if (!round1Completed && !adminOverrideActive) {
+          goToSection(2);
+        } else if (!isCheckpointPassed() && !adminOverrideActive) {
+          goToSection('checkpoint');
+        } else {
+          goToSection(3);
+          const firstItem = document.querySelector('.email-item');
+          if (firstItem) firstItem.click();
+        }
+      } else if (hash === '#round1' || hash === '#recon' || hash === '#dossier') {
         goToSection(2);
+      } else if (hash === '#round3' || hash === '#terminal') {
+        if (!round1Completed && !adminOverrideActive) {
+          goToSection(2);
+        } else if (!isCheckpointPassed() && !adminOverrideActive) {
+          goToSection('checkpoint');
+        } else {
+          goToSection(4);
+        }
+      } else if (hash === '#round4' || hash === '#ai') {
+        if (!round1Completed && !adminOverrideActive) {
+          goToSection(2);
+        } else if (!isCheckpointPassed() && !adminOverrideActive) {
+          goToSection('checkpoint');
+        } else {
+          goToSection(5);
+        }
       }
-    } else if (hash === '#round1' || hash === '#recon' || hash === '#dossier') {
-      goToSection(2);
-    } else if (hash === '#round3' || hash === '#terminal') {
-      goToSection(4);
-    } else if (hash === '#round4' || hash === '#ai') {
-      goToSection(5);
     }
+
+    window.addEventListener('hashchange', handleHashRouting);
+    window.addEventListener('popstate', handleHashRouting);
+    handleHashRouting();
   });
 
 })();
