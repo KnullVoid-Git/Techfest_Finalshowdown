@@ -75,6 +75,27 @@
       ],
       quoteWrap: true,
       pulseHoldLastLine: true
+    },
+    'cutscene-3': {
+      id: 'cutscene-3',
+      storageKey: 'bo_cutscene_watched_3',
+      type: 'breach-fragment',
+      topIntro: 'The website confirms the submission.',
+      badge: 'PHISHING ATTEMPT IDENTIFIED',
+      subtitle: 'Communication evidence recovered.',
+      fragmentLabel: 'FRAGMENT 02: 8',
+      fragmentKey: '02',
+      fragmentValue: '8',
+      ghostIntro: 'The Ghost interrupts.',
+      ghostQuotes: [
+        "Two security layers. Two victories.",
+        "You can recognize a weak password.",
+        "You can recognize a fraudulent message.",
+        "But what happens when the system you trust tells you exactly what you want to hear?",
+        "What happens when the investigator becomes the one being manipulated?",
+        "Welcome to my favorite experiment."
+      ],
+      quoteWrap: true
     }
   };
 
@@ -588,6 +609,7 @@
       try {
         localStorage.removeItem('bo_cutscene_watched_1');
         localStorage.removeItem('bo_cutscene_watched_2');
+        localStorage.removeItem('bo_cutscene_watched_3');
       } catch (_) {}
     }
 
@@ -714,26 +736,48 @@
         this.saveFragment(config.fragmentKey, config.fragmentValue);
       }
 
+      const topIntroHtml = config.topIntro
+        ? `<div class="cutscene-top-intro" id="cTopIntro">${config.topIntro}</div>`
+        : '';
+      const noteHtml = config.note
+        ? `<div class="breach-note">${config.note}</div>`
+        : '';
+      const nextRoundHtml = config.nextRoundNotice
+        ? `<div class="next-round-line pulse-hold" id="cNextRound" style="opacity:0;">${config.nextRoundNotice}</div>`
+        : '';
+
       wrapper.innerHTML = `
+        ${topIntroHtml}
         <div class="cutscene-breach-panel" id="cBreachPanel">
           <div class="breach-badge">${config.badge}</div>
           <div class="breach-subtitle">${config.subtitle}</div>
           <div class="breach-fragment-val pulse-glow" id="cFragVal">${config.fragmentLabel}</div>
-          <div class="breach-note">${config.note}</div>
+          ${noteHtml}
         </div>
 
         <div class="ghost-response-container" id="cGhostContainer">
           <div class="ghost-speaker-intro">${config.ghostIntro}</div>
           <div class="ghost-quote-wrapper" id="cGhostQuotes"></div>
-          <div class="next-round-line pulse-hold" id="cNextRound" style="opacity:0;">${config.nextRoundNotice}</div>
+          ${nextRoundHtml}
         </div>
       `;
 
+      const topIntroEl = document.getElementById('cTopIntro');
       const panelEl = document.getElementById('cBreachPanel');
       const ghostContainer = document.getElementById('cGhostContainer');
       const ghostQuotesEl = document.getElementById('cGhostQuotes');
       const nextRoundEl = document.getElementById('cNextRound');
       const flashOverlay = document.getElementById('cutsceneGlitchFlash');
+
+      if (topIntroEl) {
+        setTimeout(() => {
+          if (this.isInterrupted) return;
+          topIntroEl.classList.add('revealed');
+          sound.playKeyboardTick();
+        }, 150);
+      }
+
+      const panelDelay = topIntroEl ? 650 : 400;
 
       // 1. Screen shake + glitch flash + rising access chime
       setTimeout(() => {
@@ -749,21 +793,24 @@
 
         panelEl.classList.add('revealed');
         sound.playImpactBoom();
-      }, 400);
+      }, panelDelay);
 
       // 2. Remove shake class after animation
       setTimeout(() => {
         this.overlay.classList.remove('cutscene-screen-shake');
-      }, 900);
+      }, panelDelay + 500);
 
       // 3. Ghost response intro reveals
+      const ghostDelay = panelDelay + 1600;
       setTimeout(() => {
         if (this.isInterrupted) return;
         ghostContainer.classList.add('revealed');
 
         // Render Ghost Quote lines line by line
-        this.startLinesTypewriter(config.ghostQuotes, ghostQuotesEl, true, () => {
-          // Show "The next round begins." with slow pulse
+        this.startLinesTypewriter(config.ghostQuotes, ghostQuotesEl, config.quoteWrap !== false, () => {
+          this.markWatched(config.id);
+
+          // Show next round notice if configured
           if (nextRoundEl) {
             nextRoundEl.style.transition = 'opacity 0.6s ease';
             nextRoundEl.style.opacity = '1';
@@ -775,7 +822,7 @@
             this.finishCutscene();
           }, 2400);
         });
-      }, 2000);
+      }, ghostDelay);
     }
 
     // ========================================================================

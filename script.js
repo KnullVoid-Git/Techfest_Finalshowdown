@@ -426,6 +426,16 @@
           return;
         }
       }
+
+      // Cutscene 3 Trigger before Round 3 (after Round 2 Phishing identified)
+      if ((stageNum === 4 || stageNum === '4') && !bypassLock) {
+        if (window.CutscenePlayer && !window.CutscenePlayer.hasWatched('cutscene-3')) {
+          window.CutscenePlayer.play('cutscene-3', () => {
+            goToSection(4, true);
+          });
+          return;
+        }
+      }
     }
 
     currentStage = stageNum;
@@ -2052,7 +2062,13 @@
     const proceedToR3 = document.getElementById('proceedToRound3Btn');
     if (proceedToR3) {
       proceedToR3.addEventListener('click', () => {
-        goToSection(4);
+        if (window.CutscenePlayer && !window.CutscenePlayer.hasWatched('cutscene-3')) {
+          window.CutscenePlayer.play('cutscene-3', () => {
+            goToSection(4, true);
+          });
+        } else {
+          goToSection(4);
+        }
       });
     }
 
@@ -2899,6 +2915,16 @@
         closeConsole();
         if (window.CutscenePlayer) {
           window.CutscenePlayer.playCutscene2();
+        }
+      });
+    }
+
+    const replayC3Btn = document.getElementById('adminReplayCutscene3Btn');
+    if (replayC3Btn) {
+      replayC3Btn.addEventListener('click', () => {
+        closeConsole();
+        if (window.CutscenePlayer) {
+          window.CutscenePlayer.play('cutscene-3');
         }
       });
     }

@@ -261,7 +261,24 @@
   }
 }
 
-/* 9. Cutscene 2 Part A: Breach & Fragment Panel */
+/* Top intro line (e.g. "The website confirms the submission.") */
+.cutscene-top-intro {
+  font-family: var(--cutscene-font-sans);
+  font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+  color: #ffffff;
+  font-weight: 500;
+  margin-bottom: clamp(1.15rem, 2.3vh, 1.6rem);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.cutscene-top-intro.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 9. Cutscene Breach & Fragment Panel */
 .cutscene-breach-panel {
   background: rgba(10, 24, 18, 0.94);
   border: 1px solid var(--cutscene-border);
@@ -308,6 +325,10 @@
   transform-origin: left center;
 }
 
+.cutscene-breach-panel .breach-fragment-val:last-child {
+  margin-bottom: 0;
+}
+
 .breach-fragment-val.pulse-glow {
   animation: fragment-pulse-glow 2.4s infinite ease-in-out;
 }
@@ -351,12 +372,26 @@
 }
 
 .ghost-quote-wrapper {
-  border-left: 3px solid #5a5a5a;
+  border-left: 3px solid #4a544e;
   padding-left: clamp(1rem, 2vw, 1.4rem);
   display: flex;
   flex-direction: column;
-  gap: 0.95rem;
+  gap: clamp(0.55rem, 1.2vh, 0.85rem);
   margin: 0.25rem 0;
+}
+
+.ghost-quote-wrapper .cutscene-line-item {
+  font-size: clamp(1.02rem, 1.75vw, 1.26rem);
+  line-height: 1.58;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ghost-quote-wrapper .cutscene-line-item.active {
+  color: #ffffff;
+}
+
+.ghost-quote-wrapper .cutscene-line-item.completed {
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .ghost-quote-line {
