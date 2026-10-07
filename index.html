@@ -17,6 +17,7 @@
   <!-- Stylesheets -->
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="cutscene.css">
+  <link rel="stylesheet" href="timeline-round.css">
 </head>
 <body>
 
@@ -45,12 +46,16 @@
         <span class="step-num">02</span><span class="step-label">MAILBOX</span>
       </div>
       <div class="tracker-divider">/</div>
-      <div class="tracker-step" data-step="4" title="Round 3: Vault Terminal">
-        <span class="step-num">03</span><span class="step-label">TERMINAL</span>
+      <div class="tracker-step" data-step="timeline" title="Round 3: Breach Timeline">
+        <span class="step-num">03</span><span class="step-label">TIMELINE</span>
       </div>
       <div class="tracker-divider">/</div>
-      <div class="tracker-step" data-step="5" title="Round 4: AI Override">
-        <span class="step-num">04</span><span class="step-label">AI OVERRIDE</span>
+      <div class="tracker-step" data-step="4" title="Round 4: Vault Terminal">
+        <span class="step-num">04</span><span class="step-label">TERMINAL</span>
+      </div>
+      <div class="tracker-divider">/</div>
+      <div class="tracker-step" data-step="5" title="Round 5: AI Override">
+        <span class="step-num">05</span><span class="step-label">AI OVERRIDE</span>
       </div>
     </nav>
 
@@ -648,7 +653,7 @@
             <div class="reveal-footer">
               <button class="cyber-button primary-btn" id="proceedToRound3Btn">
                 <span class="btn-bracket">[</span>
-                <span class="btn-text">PROCEED TO ROUND 3: PASSWORD TERMINAL >></span>
+                <span class="btn-text">PROCEED TO NEXT ROUND: BREACH TIMELINE >></span>
                 <span class="btn-bracket">]</span>
                 <span class="btn-glow"></span>
               </button>
@@ -678,6 +683,208 @@
             </div>
             <div class="lockout-retry-note text-dim">
               Reboots workstation, restores 3/3 attempts, clears triage filters, and randomly reshuffles all 21 dispatches.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION: BREACH TIMELINE (LOG ANALYSIS)                                   -->
+  <!-- ========================================================================= -->
+  <section id="section-timeline" class="view-section">
+    <div class="section-wrapper timeline-layout">
+      
+      <!-- Section Header -->
+      <div class="section-heading-bar">
+        <div>
+          <span class="sub-badge cyan-border">PHASE 02.5 // FORENSIC LOG AUDIT</span>
+          <h2 class="glitch-text" id="timelineRoundTitle" data-text="ROUND 3: BREACH TIMELINE">ROUND 3: BREACH TIMELINE</h2>
+        </div>
+        <div class="stamp-box">
+          <span class="stamp-text">INCIDENT: NOVATECH</span>
+          <span class="stamp-id">CASE-LOG: #03-OCT</span>
+        </div>
+      </div>
+
+      <!-- Short Intro Text -->
+      <div class="timeline-intro-card">
+        <span class="timeline-intro-icon">🕵️</span>
+        <div class="timeline-intro-text">
+          NovaTech Solutions was hacked on Friday, 3 Oct. Study the evidence. Find the exact time the attacker first got in.
+        </div>
+      </div>
+
+      <!-- Main Grid: Left Evidence Workspace | Right Answer Verification -->
+      <div class="timeline-main-grid">
+
+        <!-- Column 1: Evidence Workspace (Tabs) -->
+        <div class="timeline-evidence-card">
+          <div class="terminal-titlebar">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">evidence_spool://novatech-solutions/forensics</div>
+            <div class="terminal-specs">READ-ONLY // EVIDENCE SEALED</div>
+          </div>
+
+          <!-- Evidence Navigation Tabs -->
+          <div class="timeline-tabs-bar">
+            <button type="button" class="timeline-tab-btn active" id="tabBtnDoor">
+              <span>🏢 Door Badge Log</span>
+              <span class="tab-badge">ACCESS CTRL</span>
+            </button>
+            <button type="button" class="timeline-tab-btn" id="tabBtnLogin">
+              <span>💻 Login Log</span>
+              <span class="tab-badge">AUTH SPOOL</span>
+            </button>
+            <button type="button" class="timeline-tab-btn" id="tabBtnNotice">
+              <span>📋 Notice Board</span>
+              <span class="tab-badge">BULLETIN</span>
+            </button>
+          </div>
+
+          <!-- Tab Panes -->
+          <div class="timeline-panes-wrapper timeline-evidence-content">
+            
+            <!-- Pane 1: Door Badge Log (Active by default) -->
+            <div class="timeline-pane active" id="paneDoorLog">
+              <div class="timeline-table-wrapper">
+                <table class="timeline-table" aria-label="Door Badge Log">
+                  <thead>
+                    <tr>
+                      <th style="width: 140px;">TIMESTAMP</th>
+                      <th>PERSONNEL / ROLE</th>
+                      <th>EVENT TYPE</th>
+                    </tr>
+                  </thead>
+                  <tbody id="timelineDoorTableBody">
+                    <!-- Populated dynamically from timeline-data.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pane 2: Login Log (Hidden until clicked) -->
+            <div class="timeline-pane" id="paneLoginLog">
+              <div class="timeline-table-wrapper">
+                <table class="timeline-table" aria-label="Login Log">
+                  <thead>
+                    <tr>
+                      <th style="width: 130px;">TIME</th>
+                      <th style="width: 160px;">USER</th>
+                      <th>EVENT</th>
+                      <th style="width: 170px;">DEVICE / ORIGIN</th>
+                    </tr>
+                  </thead>
+                  <tbody id="timelineLoginTableBody">
+                    <!-- Populated dynamically from timeline-data.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pane 3: Notice Board (Hidden until clicked - strictly per instructions) -->
+            <div class="timeline-pane" id="paneNoticeBoard">
+              <div class="notice-board-container">
+                <div class="notice-board-banner">
+                  <span>📌</span>
+                  <span>INTERNAL BULLETIN BOARD // NOVATECH HEADQUARTERS — FRIDAY, 3 OCT</span>
+                </div>
+                <div class="notice-board-list" id="timelineNoticeBoardList">
+                  <!-- Populated dynamically from timeline-data.js -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Column 2: Answer Verification Panel -->
+        <aside class="timeline-verify-panel" id="timelineVerifyPanel">
+          <div class="timeline-verify-header">
+            <span class="sec-lock-icon">🔒</span> BREACH TIMESTAMP VERIFICATION
+          </div>
+
+          <!-- Attempts Left Pips -->
+          <div class="timeline-attempts-row">
+            <span class="attempts-label">ATTEMPTS LEFT:</span>
+            <div class="attempt-pips" id="timelineAttemptPips">
+              <span class="pip filled"></span>
+              <span class="pip filled"></span>
+              <span class="pip filled"></span>
+            </div>
+          </div>
+
+          <!-- Team Key Info Badge -->
+          <div class="timeline-key-info-badge" id="timelineTeamKeyBadge">
+            <span>TEAM: <strong>ALPHA</strong></span>
+            <span>KEY: <strong>3</strong></span>
+          </div>
+
+          <!-- Answer Form -->
+          <form id="timelineVerifyForm" class="sec-login-form" autocomplete="off">
+            <div class="timeline-input-group">
+              <label for="timelineTimeInput" class="timeline-label">BREACH TIME ENCRYPTED CODE</label>
+              <input type="text" id="timelineTimeInput" class="timeline-input" placeholder="HHMM" maxlength="4" autocomplete="off" spellcheck="false">
+              <div class="timeline-helper-text">
+                Enter the breach time as 4 digits in 24-hour format (HHMM). Then add your team key to every digit (wrap around after 9). Example: key 2 turns 0845 into 2067.
+              </div>
+            </div>
+            <button type="submit" id="timelineSubmitBtn" class="cyber-button primary-btn w-full">
+              <span class="btn-bracket">[</span>
+              <span class="btn-text">SUBMIT TIMESTAMP >></span>
+              <span class="btn-bracket">]</span>
+              <span class="btn-glow"></span>
+            </button>
+          </form>
+
+          <div id="timelineFeedback" class="sec-feedback" aria-live="polite"></div>
+
+          <!-- Success Reveal Card -->
+          <div class="timeline-reveal-card hidden" id="timelineRevealCard">
+            <div class="timeline-reveal-header text-green">
+              <span class="pulse-dot green"></span>
+              <span>AUTHENTICATION SUCCESSFUL // VERIFIED</span>
+            </div>
+            <div class="timeline-typewriter-text" id="timelineTypewriterText">
+              ACCESS GRANTED — FIRST BREACH TIME AUTHENTICATED
+            </div>
+            <button class="cyber-button primary-btn w-full" id="proceedFromTimelineBtn">
+              <span class="btn-bracket">[</span>
+              <span class="btn-text">PROCEED TO NEXT ROUND >></span>
+              <span class="btn-bracket">]</span>
+              <span class="btn-glow"></span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- Lockout Overlay -->
+        <div id="timelineLockoutOverlay" class="timeline-lockout-overlay hidden">
+          <div class="lockout-modal-card">
+            <div class="lockout-alarm-icon">🚨</div>
+            <h2 class="glitch-text text-red" data-text="SECURITY LOCKOUT">SECURITY LOCKOUT</h2>
+            <div class="lockout-subtitle">ACCESS DENIED. Call an organizer.</div>
+            <p class="lockout-desc">Authentication attempts exhausted (0/3). This workstation has been isolated by central security protocols.</p>
+
+            <div class="lockout-actions">
+              <button id="timelineLockoutRetryBtn" class="cyber-button primary-btn lockout-retry-btn" type="button">
+                <span class="btn-bracket">[</span>
+                <span class="btn-text">🔄 RETRY TIMELINE RECON</span>
+                <span class="btn-bracket">]</span>
+                <span class="btn-glow"></span>
+              </button>
+              <button id="timelineLockoutCallOrgBtn" class="cyber-button text-btn lockout-organizer-btn" type="button">
+                <span>⚡ Open Organizer Console (Ctrl+Shift+A)</span>
+              </button>
+            </div>
+            <div class="lockout-retry-note text-dim">
+              Restores 3/3 attempts for the breach timeline round.
             </div>
           </div>
         </div>
@@ -1182,7 +1389,9 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
             <button class="cyber-button sm" id="adminSkipCheckpointBtn">⚡ SKIP SPONSOR CHECKPOINT</button>
             <button class="cyber-button sm" id="adminResetCheckpointBtn">↺ RESET CHECKPOINT</button>
             <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET ATTEMPTS (TO 3)</button>
+            <button class="cyber-button sm" id="adminResetTimelineAttemptsBtn">RESET TIMELINE ATTEMPTS (TO 3)</button>
             <button class="cyber-button sm" id="adminResetR2Btn">RESET & RESHUFFLE ROUND 2</button>
+            <button class="cyber-button primary-btn sm" id="adminForceUnlockTimelineBtn">FORCE-UNLOCK TIMELINE</button>
             <button class="cyber-button primary-btn sm" id="adminForceUnlockR3Btn">FORCE-UNLOCK ROUND 3</button>
           </div>
 
@@ -1225,6 +1434,7 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
               <button class="cyber-button sm" data-jump="2">01: RECON</button>
               <button class="cyber-button sm" data-jump="checkpoint">CHECKPOINT</button>
               <button class="cyber-button sm" data-jump="3">02: MAILBOX</button>
+              <button class="cyber-button sm" data-jump="timeline">02.5: TIMELINE</button>
               <button class="cyber-button sm" data-jump="4">03: TERMINAL</button>
               <button class="cyber-button sm" data-jump="5">04: AI ROUND</button>
               <button class="cyber-button sm" data-jump="victory">05: VICTORY</button>
@@ -1241,6 +1451,9 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
 
   <!-- Cinematic Cutscene Engine -->
   <script src="cutscene.js"></script>
+  <!-- Timeline Evidence Data & Controller -->
+  <script src="timeline-data.js"></script>
+  <script src="timeline-round.js"></script>
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 </body>

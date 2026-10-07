@@ -530,6 +530,7 @@
     2: document.getElementById('section-round1'),
     'checkpoint': document.getElementById('section-checkpoint'),
     3: document.getElementById('section-round2'),
+    'timeline': document.getElementById('section-timeline'),
     4: document.getElementById('section-round3'),
     5: document.getElementById('section-round4')
   };
@@ -548,6 +549,25 @@
       }
     } catch (_) {}
     return false;
+  }
+
+  function isMailboxCompleted() {
+    if (adminOverrideActive) return true;
+    try {
+      return sessionStorage.getItem('bo_r2_completed') === 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isTimelineDone() {
+    if (adminOverrideActive) return true;
+    if (window.isTimelineCompleted) return window.isTimelineCompleted();
+    try {
+      return sessionStorage.getItem('bo_timeline_completed') === 'true';
+    } catch (_) {
+      return false;
+    }
   }
 
   function goToSection(stageNum, bypassLock = false) {
@@ -570,7 +590,7 @@
         audio.errorBuzz();
         return;
       }
-    } else if (stageNum === 3 || stageNum === '3' || stageNum === 4 || stageNum === '4' || stageNum === 5 || stageNum === '5') {
+    } else if (stageNum === 3 || stageNum === '3' || stageNum === 'timeline' || stageNum === 4 || stageNum === '4' || stageNum === 5 || stageNum === '5') {
       if (!round1Completed && !adminOverrideActive && !bypassLock) {
         showToast('ACCESS DENIED: Complete Round 1 Reconnaissance first.', 'error');
         audio.errorBuzz();
@@ -593,12 +613,32 @@
         }
       }
 
-      // Cutscene 3 Trigger before Round 3 (after Round 2 Phishing identified)
-      if ((stageNum === 4 || stageNum === '4') && !bypassLock) {
+      // Require Round 2 Mailbox completed before Timeline and later stages
+      if (stageNum === 'timeline' || stageNum === 4 || stageNum === '4' || stageNum === 5 || stageNum === '5') {
+        if (!isMailboxCompleted() && !adminOverrideActive && !bypassLock) {
+          showToast('ACCESS DENIED: Authenticate Round 2 credentials first.', 'error');
+          audio.errorBuzz();
+          goToSection(3);
+          return;
+        }
+      }
+
+      // Cutscene 3 Trigger before Breach Timeline (after Round 2 Phishing identified)
+      if ((stageNum === 'timeline' || stageNum === 4 || stageNum === '4') && !bypassLock) {
         if (window.CutscenePlayer && !window.CutscenePlayer.hasWatched('cutscene-3')) {
           window.CutscenePlayer.play('cutscene-3', () => {
-            goToSection(4, true);
+            goToSection(stageNum, true);
           });
+          return;
+        }
+      }
+
+      // Require Breach Timeline completed before Password Terminal and later stages
+      if (stageNum === 4 || stageNum === '4' || stageNum === 5 || stageNum === '5') {
+        if (!isTimelineDone() && !adminOverrideActive && !bypassLock) {
+          showToast('ACCESS DENIED: Verify Breach Timeline evidence first.', 'error');
+          audio.errorBuzz();
+          goToSection('timeline');
           return;
         }
       }
@@ -649,21 +689,26 @@
     }
 
     // Update HUD round tracker
+    const STAGE_ORDER = {
+      '1': 1,
+      '2': 2,
+      'checkpoint': 2.5,
+      '3': 3,
+      'timeline': 3.5,
+      '4': 4,
+      '5': 5
+    };
+    const currentOrder = STAGE_ORDER[String(stageNum)] || 1;
+
     const steps = document.querySelectorAll('.tracker-step');
     steps.forEach(step => {
-      const stepIdx = parseInt(step.getAttribute('data-step'), 10);
+      const stepKey = step.getAttribute('data-step');
+      const stepOrder = STAGE_ORDER[stepKey] || parseInt(stepKey, 10) || 0;
       step.classList.remove('active', 'completed');
-      if (stageNum === 'checkpoint') {
-        if (stepIdx <= 2) {
-          step.classList.add('completed');
-        }
-      } else {
-        const numStage = parseInt(stageNum, 10);
-        if (stepIdx === numStage) {
-          step.classList.add('active');
-        } else if (stepIdx < numStage) {
-          step.classList.add('completed');
-        }
+      if (stepKey === String(stageNum)) {
+        step.classList.add('active');
+      } else if (stepOrder < currentOrder) {
+        step.classList.add('completed');
       }
     });
 
@@ -677,6 +722,8 @@
         if (window.location.hash !== '#round1') history.replaceState(null, '', '#round1');
       } else if (stageNum === 3 || stageNum === '3') {
         if (window.location.hash !== '#round2') history.replaceState(null, '', '#round2');
+      } else if (stageNum === 'timeline') {
+        if (window.location.hash !== '#timeline') history.replaceState(null, '', '#timeline');
       } else if (stageNum === 4 || stageNum === '4') {
         if (window.location.hash !== '#round3') history.replaceState(null, '', '#round3');
       } else if (stageNum === 5 || stageNum === '5') {
@@ -2257,16 +2304,16 @@
       });
     }
 
-    // Proceed to Round 3 Button
+    // Proceed to Next Round (Timeline) Button
     const proceedToR3 = document.getElementById('proceedToRound3Btn');
     if (proceedToR3) {
       proceedToR3.addEventListener('click', () => {
         if (window.CutscenePlayer && !window.CutscenePlayer.hasWatched('cutscene-3')) {
           window.CutscenePlayer.play('cutscene-3', () => {
-            goToSection(4, true);
+            goToSection('timeline', true);
           });
         } else {
-          goToSection(4);
+          goToSection('timeline');
         }
       });
     }
@@ -2569,6 +2616,10 @@
 
     if (hash === TARGET_CREDENTIAL_HASH) {
       // Correct!
+      try {
+        sessionStorage.setItem('bo_r2_completed', 'true');
+      } catch (_) {}
+
       if (feedbackEl) {
         feedbackEl.textContent = '✓ CREDENTIALS VERIFIED';
         feedbackEl.className = 'sec-feedback text-green';
@@ -3206,19 +3257,44 @@
       });
     }
 
-    // Action 3: Force-unlock Round 3
+    // Action: Reset Timeline Attempts
+    const resetTimelineBtn = document.getElementById('adminResetTimelineAttemptsBtn');
+    if (resetTimelineBtn) {
+      resetTimelineBtn.addEventListener('click', () => {
+        if (window.resetTimelineRound) {
+          window.resetTimelineRound({ restoreAttempts: true, announce: true });
+        }
+      });
+    }
+
+    // Action: Force-unlock Timeline Round
+    const forceUnlockTimelineBtn = document.getElementById('adminForceUnlockTimelineBtn');
+    if (forceUnlockTimelineBtn) {
+      forceUnlockTimelineBtn.addEventListener('click', () => {
+        adminOverrideActive = true;
+        try {
+          sessionStorage.setItem('bo_r2_completed', 'true');
+        } catch (_) {}
+        closeConsole();
+        showToast('✓ Breach Timeline unlocked via Organizer Override', 'success');
+        goToSection('timeline', true);
+      });
+    }
+
+    // Action 3: Force-unlock Round 3 (Password Terminal)
     const forceUnlockR3Btn = document.getElementById('adminForceUnlockR3Btn');
     if (forceUnlockR3Btn) {
       forceUnlockR3Btn.addEventListener('click', () => {
         adminOverrideActive = true;
+        try {
+          sessionStorage.setItem('bo_r2_completed', 'true');
+          sessionStorage.setItem('bo_timeline_completed', 'true');
+        } catch (_) {}
         const revealCard = document.getElementById('caseIdRevealCard');
         if (revealCard) revealCard.classList.remove('hidden');
         closeConsole();
-        showToast('✓ Round 3 unlocked via Organizer Override', 'success');
-        const proceedBtn = document.getElementById('proceedToRound3Btn');
-        if (proceedBtn) {
-          proceedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+        showToast('✓ Password Terminal unlocked via Organizer Override', 'success');
+        goToSection(4, true);
       });
     }
 
@@ -3299,10 +3375,10 @@
         adminOverrideActive = true;
         if (target === 'victory') {
           showVictoryScreen();
-        } else if (target === 'checkpoint') {
+        } else if (target === 'checkpoint' || target === 'timeline') {
           const victoryOverlay = document.getElementById('victoryOverlay');
           if (victoryOverlay) victoryOverlay.classList.add('hidden');
-          goToSection('checkpoint', true);
+          goToSection(target, true);
         } else {
           const victoryOverlay = document.getElementById('victoryOverlay');
           if (victoryOverlay) victoryOverlay.classList.add('hidden');
@@ -3357,22 +3433,9 @@
     const trackerSteps = document.querySelectorAll('.tracker-step');
     trackerSteps.forEach(step => {
       step.addEventListener('click', () => {
-        const stepNum = parseInt(step.getAttribute('data-step'), 10);
-        if (stepNum >= 3 && !round1Completed && !adminOverrideActive) {
-          showToast('ACCESS DENIED: Complete Round 1 Reconnaissance first.', 'error');
-          audio.errorBuzz();
-          return;
-        }
-        if (stepNum >= 3 && !isCheckpointPassed() && !adminOverrideActive) {
-          showToast('SPONSOR CHECKPOINT REQUIRED // CHANNEL ENCRYPTED', 'warning');
-          audio.errorBuzz();
-          goToSection('checkpoint');
-          return;
-        }
-        // Allow navigation to visited or unlocked steps
-        if (step.classList.contains('completed') || step.classList.contains('active') || (typeof currentStage === 'number' && stepNum <= currentStage) || adminOverrideActive) {
-          goToSection(stepNum);
-        }
+        const stepVal = step.getAttribute('data-step');
+        const targetStage = (stepVal === 'timeline' || stepVal === 'checkpoint') ? stepVal : parseInt(stepVal, 10);
+        goToSection(targetStage);
       });
     });
   }
@@ -3427,6 +3490,7 @@
     initRound1Recon();
     initSponsorCheckpoint();
     initMailbox();
+    if (window.initBreachTimeline) window.initBreachTimeline();
     initPasswordTerminal();
     initAiChallenge();
     initOrganizerOverride();
@@ -3452,11 +3516,25 @@
         }
       } else if (hash === '#round1' || hash === '#recon' || hash === '#dossier') {
         goToSection(2);
+      } else if (hash === '#timeline' || hash === '#breach-timeline') {
+        if (!round1Completed && !adminOverrideActive) {
+          goToSection(2);
+        } else if (!isCheckpointPassed() && !adminOverrideActive) {
+          goToSection('checkpoint');
+        } else if (!isMailboxCompleted() && !adminOverrideActive) {
+          goToSection(3);
+        } else {
+          goToSection('timeline');
+        }
       } else if (hash === '#round3' || hash === '#terminal') {
         if (!round1Completed && !adminOverrideActive) {
           goToSection(2);
         } else if (!isCheckpointPassed() && !adminOverrideActive) {
           goToSection('checkpoint');
+        } else if (!isMailboxCompleted() && !adminOverrideActive) {
+          goToSection(3);
+        } else if (!isTimelineDone() && !adminOverrideActive) {
+          goToSection('timeline');
         } else {
           goToSection(4);
         }
@@ -3465,6 +3543,10 @@
           goToSection(2);
         } else if (!isCheckpointPassed() && !adminOverrideActive) {
           goToSection('checkpoint');
+        } else if (!isMailboxCompleted() && !adminOverrideActive) {
+          goToSection(3);
+        } else if (!isTimelineDone() && !adminOverrideActive) {
+          goToSection('timeline');
         } else {
           goToSection(5);
         }
