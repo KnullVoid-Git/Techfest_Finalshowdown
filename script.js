@@ -22,8 +22,8 @@
   // ==========================================================================
   const IG_URL = "https://www.instagram.com/kapidhwaj.innovations/";
   const IG_HANDLE = "@kapidhwaj.innovations";
-  const MIN_AWAY_SECONDS = 10;
-  const REQUIRE_PROOF_CODE = true;
+  const MIN_AWAY_SECONDS = 2;
+  const REQUIRE_PROOF_CODE = false;
   const REQUIRE_HANDLES = true;
   const PROOF_HASH = "b4fcf04c8e6aa45ab3f5c3262b57015142cb34d11430d2acd651e8d74580a14d";
 
@@ -567,7 +567,6 @@
           if (charIndex < item.text.length) {
             msgSpan.textContent += item.text.charAt(charIndex);
             charIndex++;
-            audio.keyClick();
             setTimeout(typeChar, 12);
           } else {
             lineIndex++;
@@ -610,7 +609,6 @@
         heading.classList.add('glitch-flicker-trigger');
       }
     }
-    audio.successChime();
   }
 
   // ==========================================================================
@@ -1061,13 +1059,12 @@
     // Check overall progress and update Continue button state
     function updateOverallProgress() {
       const state = getCheckpointState();
-      const enabledSteps = [
-        state.step1,
-        state.step2,
-        REQUIRE_HANDLES ? state.step3 : true,
-        REQUIRE_PROOF_CODE ? state.step4 : true,
-        state.step5
-      ];
+      const enabledSteps = [];
+      enabledSteps.push(Boolean(state.step1));
+      enabledSteps.push(Boolean(state.step2));
+      if (REQUIRE_HANDLES) enabledSteps.push(Boolean(state.step3));
+      if (REQUIRE_PROOF_CODE) enabledSteps.push(Boolean(state.step4));
+      enabledSteps.push(Boolean(state.step5));
 
       const completedCount = enabledSteps.filter(Boolean).length;
       const totalCount = enabledSteps.length;
@@ -1170,72 +1167,90 @@
     }
 
     // --- STEP 2: AWAY CHECK (VISIBILITY CHANGE TELEMETRY) ---
-    document.addEventListener('visibilitychange', () => {
+    // --- STEP 2: AWAY CHECK (VISIBILITY CHANGE TELEMETRY) ---
+    function checkAwayTelemetry() {
       const state = getCheckpointState();
       if (state.step2 || isScanningAway) return;
 
+      if (lastIgClickTime > 0) {
+        const awayRef = tabHiddenStartTime > 0 ? tabHiddenStartTime : lastIgClickTime;
+        const hiddenSeconds = (Date.now() - awayRef) / 1000;
+        tabHiddenStartTime = 0; // Prevent duplicate triggers
+
+        if (hiddenSeconds < MIN_AWAY_SECONDS) {
+          // Returned too soon (< 2 seconds)
+          audio.errorBuzz();
+          if (awayStatusMsg) {
+            awayStatusMsg.innerHTML = '<span class="text-red">SIGNAL NOT CONFIRMED. Follow the account first, then come back.</span>';
+            awayStatusMsg.classList.remove('shake-text');
+            void awayStatusMsg.offsetWidth;
+            awayStatusMsg.classList.add('shake-text');
+          }
+          // Require clicking OPEN INSTAGRAM again
+          state.step1 = false;
+          saveCheckpointState(state);
+          lastIgClickTime = 0;
+
+          if (step1CheckIcon) {
+            step1CheckIcon.textContent = '◻';
+            step1CheckIcon.className = 'step-check';
+          }
+          if (step1StatusTag) {
+            step1StatusTag.textContent = 'RE-TRANSMISSION REQUIRED';
+            step1StatusTag.className = 'step-status-tag text-red';
+          }
+          if (step1Item) step1Item.classList.remove('ticked');
+          updateOverallProgress();
+        } else {
+          // Valid away duration! (>= 2 seconds) Play scan animation
+          isScanningAway = true;
+          if (awayScanBox) awayScanBox.classList.remove('hidden');
+          if (awayStatusMsg) awayStatusMsg.classList.add('hidden');
+          audio.keyClick();
+
+          setTimeout(() => {
+            isScanningAway = false;
+            if (awayScanBox) awayScanBox.classList.add('hidden');
+            if (awayStatusMsg) {
+              awayStatusMsg.classList.remove('hidden');
+              // Strict rule: Success copy says "SIGNAL CONFIRMED", never "FOLLOW VERIFIED"
+              awayStatusMsg.innerHTML = '<span class="text-green">✓ SIGNAL CONFIRMED // TELEMETRY LINK ACTIVE</span>';
+            }
+            state.step2 = true;
+            saveCheckpointState(state);
+
+            if (step2CheckIcon) {
+              step2CheckIcon.textContent = '✓';
+              step2CheckIcon.className = 'step-check ticked';
+            }
+            if (step2Item) step2Item.classList.add('ticked');
+
+            audio.successChime();
+            updateOverallProgress();
+          }, 1500);
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         if (lastIgClickTime > 0) {
           tabHiddenStartTime = Date.now();
         }
       } else if (document.visibilityState === 'visible') {
-        if (lastIgClickTime > 0 && tabHiddenStartTime > 0) {
-          const hiddenSeconds = (Date.now() - tabHiddenStartTime) / 1000;
-          tabHiddenStartTime = 0; // Prevent duplicate triggers
+        checkAwayTelemetry();
+      }
+    });
 
-          if (hiddenSeconds < MIN_AWAY_SECONDS) {
-            // Returned too soon
-            audio.errorBuzz();
-            if (awayStatusMsg) {
-              awayStatusMsg.innerHTML = '<span class="text-red">SIGNAL NOT CONFIRMED. Follow the account first, then come back.</span>';
-              awayStatusMsg.classList.remove('shake-text');
-              void awayStatusMsg.offsetWidth;
-              awayStatusMsg.classList.add('shake-text');
-            }
-            // Require clicking OPEN INSTAGRAM again
-            state.step1 = false;
-            saveCheckpointState(state);
-            lastIgClickTime = 0;
+    window.addEventListener('focus', () => {
+      if (document.visibilityState === 'visible') {
+        checkAwayTelemetry();
+      }
+    });
 
-            if (step1CheckIcon) {
-              step1CheckIcon.textContent = '◻';
-              step1CheckIcon.className = 'step-check';
-            }
-            if (step1StatusTag) {
-              step1StatusTag.textContent = 'RE-TRANSMISSION REQUIRED';
-              step1StatusTag.className = 'step-status-tag text-red';
-            }
-            if (step1Item) step1Item.classList.remove('ticked');
-            updateOverallProgress();
-          } else {
-            // Valid away duration! Play 2-second scan animation
-            isScanningAway = true;
-            if (awayScanBox) awayScanBox.classList.remove('hidden');
-            if (awayStatusMsg) awayStatusMsg.classList.add('hidden');
-            audio.keyClick();
-
-            setTimeout(() => {
-              isScanningAway = false;
-              if (awayScanBox) awayScanBox.classList.add('hidden');
-              if (awayStatusMsg) {
-                awayStatusMsg.classList.remove('hidden');
-                // Strict rule: Success copy says "SIGNAL CONFIRMED", never "FOLLOW VERIFIED"
-                awayStatusMsg.innerHTML = '<span class="text-green">✓ SIGNAL CONFIRMED // TELEMETRY LINK ACTIVE</span>';
-              }
-              state.step2 = true;
-              saveCheckpointState(state);
-
-              if (step2CheckIcon) {
-                step2CheckIcon.textContent = '✓';
-                step2CheckIcon.className = 'step-check ticked';
-              }
-              if (step2Item) step2Item.classList.add('ticked');
-
-              audio.successChime();
-              updateOverallProgress();
-            }, 2000);
-          }
-        }
+    window.addEventListener('blur', () => {
+      if (lastIgClickTime > 0 && !tabHiddenStartTime) {
+        tabHiddenStartTime = Date.now();
       }
     });
 
@@ -1413,13 +1428,12 @@
     if (continueToRound2Btn) {
       continueToRound2Btn.addEventListener('click', () => {
         const state = getCheckpointState();
-        const enabledSteps = [
-          state.step1,
-          state.step2,
-          REQUIRE_HANDLES ? state.step3 : true,
-          REQUIRE_PROOF_CODE ? state.step4 : true,
-          state.step5
-        ];
+        const enabledSteps = [];
+        enabledSteps.push(Boolean(state.step1));
+        enabledSteps.push(Boolean(state.step2));
+        if (REQUIRE_HANDLES) enabledSteps.push(Boolean(state.step3));
+        if (REQUIRE_PROOF_CODE) enabledSteps.push(Boolean(state.step4));
+        enabledSteps.push(Boolean(state.step5));
 
         if (enabledSteps.filter(Boolean).length < enabledSteps.length && !adminOverrideActive) {
           showToast('Complete all checkpoint verification steps first.', 'warning');
@@ -3201,7 +3215,12 @@
       }
     }
     initMatrixRain();
-    runBootSequence();
+    const hashOnLoad = window.location.hash.toLowerCase();
+    if (hashOnLoad && hashOnLoad !== '#boot' && hashOnLoad !== '#') {
+      bootDone = true;
+    } else {
+      runBootSequence();
+    }
     initRound1Recon();
     initSponsorCheckpoint();
     initMailbox();
