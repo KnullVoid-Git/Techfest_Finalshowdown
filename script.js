@@ -142,93 +142,259 @@
     constructor() {
       this.enabled = true;
       this.ctx = null;
+      this.wantsHum = false;
+      this.bootHumOsc = null;
+      this.bootHumGain = null;
     }
 
     init() {
       if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        this.ctx = new AudioCtx();
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+        } catch (_) {}
       }
       if (this.ctx && this.ctx.state === 'suspended') {
-        this.ctx.resume();
+        this.ctx.resume().catch(() => {});
+      }
+    }
+
+    unlock() {
+      this.init();
+      if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().then(() => {
+          if (this.wantsHum && !this.bootHumGain && this.enabled) {
+            this.startBootHum();
+          }
+        }).catch(() => {});
+      } else if (this.wantsHum && !this.bootHumGain && this.enabled) {
+        this.startBootHum();
       }
     }
 
     toggle() {
       this.enabled = !this.enabled;
+      if (!this.enabled) {
+        this.stopBootHum();
+      }
       return this.enabled;
     }
 
     keyClick() {
       if (!this.enabled) return;
       this.init();
-      if (!this.ctx) return;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(700 + Math.random() * 400, this.ctx.currentTime);
-      gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.04);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.04);
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      try {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(700 + Math.random() * 400, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.04);
+      } catch (_) {}
+    }
+
+    bootTeletypeTick() {
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      try {
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        const baseFreq = 1200 + Math.random() * 500;
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.45, now + 0.018);
+        gain.gain.setValueAtTime(0.024, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.018);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.018);
+      } catch (_) {}
+    }
+
+    bootLineBlip(isAlert = false, isSuccess = false) {
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      try {
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        if (isAlert) {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.setValueAtTime(220, now + 0.05);
+          gain.gain.setValueAtTime(0.065, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.14);
+        } else if (isSuccess) {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(580, now);
+          osc.frequency.exponentialRampToValueAtTime(940, now + 0.09);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(950 + Math.random() * 150, now);
+          gain.gain.setValueAtTime(0.035, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        }
+      } catch (_) {}
+    }
+
+    startBootHum() {
+      if (!this.enabled) return;
+      this.wantsHum = true;
+      this.init();
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      if (this.bootHumGain) return;
+      try {
+        const now = this.ctx.currentTime;
+        this.bootHumOsc = this.ctx.createOscillator();
+        this.bootHumGain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        this.bootHumOsc.type = 'sawtooth';
+        this.bootHumOsc.frequency.setValueAtTime(52, now);
+        this.bootHumOsc.frequency.exponentialRampToValueAtTime(68, now + 2.2);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(150, now);
+
+        this.bootHumGain.gain.setValueAtTime(0.0001, now);
+        this.bootHumGain.gain.linearRampToValueAtTime(0.035, now + 0.8);
+
+        this.bootHumOsc.connect(filter);
+        filter.connect(this.bootHumGain);
+        this.bootHumGain.connect(this.ctx.destination);
+
+        this.bootHumOsc.start(now);
+      } catch (_) {}
+    }
+
+    stopBootHum() {
+      this.wantsHum = false;
+      if (this.bootHumGain && this.ctx) {
+        try {
+          const now = this.ctx.currentTime;
+          this.bootHumGain.gain.cancelScheduledValues(now);
+          this.bootHumGain.gain.setValueAtTime(this.bootHumGain.gain.value, now);
+          this.bootHumGain.gain.linearRampToValueAtTime(0.0001, now + 0.35);
+          if (this.bootHumOsc) {
+            this.bootHumOsc.stop(now + 0.36);
+          }
+        } catch (_) {}
+        setTimeout(() => {
+          this.bootHumOsc = null;
+          this.bootHumGain = null;
+        }, 400);
+      }
+    }
+
+    bootAccessGranted() {
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      try {
+        const now = this.ctx.currentTime;
+        // Ascending power-on authorization fan-out
+        const notes = [329.63, 440.00, 554.37, 659.25, 880.00]; // E4, A4, C#5, E5, A5
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          const t = now + idx * 0.08;
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.065, t);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.45);
+        });
+      } catch (_) {}
     }
 
     successChime() {
       if (!this.enabled) return;
       this.init();
-      if (!this.ctx) return;
-      const now = this.ctx.currentTime;
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-      notes.forEach((freq, idx) => {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
-        gain.gain.setValueAtTime(0.08, now + idx * 0.09);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.09 + 0.35);
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        osc.start(now + idx * 0.09);
-        osc.stop(now + idx * 0.09 + 0.35);
-      });
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      try {
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+          gain.gain.setValueAtTime(0.08, now + idx * 0.09);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.09 + 0.35);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.09);
+          osc.stop(now + idx * 0.09 + 0.35);
+        });
+      } catch (_) {}
     }
 
     errorBuzz() {
       if (!this.enabled) return;
       this.init();
-      if (!this.ctx) return;
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(140, now);
-      osc.frequency.setValueAtTime(110, now + 0.1);
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.28);
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      try {
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.setValueAtTime(110, now + 0.1);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.28);
+      } catch (_) {}
     }
 
     glitchZap() {
       if (!this.enabled) return;
       this.init();
-      if (!this.ctx) return;
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(220, now);
-      osc.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
-      gain.gain.setValueAtTime(0.06, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.15);
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      try {
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } catch (_) {}
     }
   }
 
@@ -542,6 +708,10 @@
     const accessGranted = document.getElementById('bootAccessGranted');
     if (!logStream) return;
 
+    // Wake audio and start atmospheric boot hum
+    audio.unlock();
+    audio.startBootHum();
+
     let lineIndex = 0;
 
     function printNextLine() {
@@ -556,6 +726,9 @@
         lineEl.innerHTML = `<span class="log-prefix">${item.prefix}</span> <span class="log-msg"></span>`;
         logStream.appendChild(lineEl);
 
+        // Audio blip on new log line entry
+        audio.bootLineBlip(Boolean(item.alert), Boolean(item.success));
+
         const msgSpan = lineEl.querySelector('.log-msg');
         let charIndex = 0;
 
@@ -566,8 +739,12 @@
           }
           if (charIndex < item.text.length) {
             msgSpan.textContent += item.text.charAt(charIndex);
+            // Play crisp typing tick every 2nd non-whitespace char
+            if (charIndex % 2 === 0 && item.text.charAt(charIndex).trim()) {
+              audio.bootTeletypeTick();
+            }
             charIndex++;
-            setTimeout(typeChar, 12);
+            setTimeout(typeChar, 14);
           } else {
             lineIndex++;
             setTimeout(printNextLine, item.delay);
@@ -576,16 +753,18 @@
 
         typeChar();
       } else {
-        finishBoot();
+        finishBoot(false);
       }
     }
 
     printNextLine();
   }
 
-  function finishBoot() {
+  function finishBoot(skipped = false) {
     if (bootDone) return;
     bootDone = true;
+    audio.stopBootHum();
+
     const accessGranted = document.getElementById('bootAccessGranted');
     const logStream = document.getElementById('bootLogStream');
 
@@ -608,6 +787,12 @@
       if (heading) {
         heading.classList.add('glitch-flicker-trigger');
       }
+    }
+
+    if (skipped) {
+      audio.keyClick();
+    } else {
+      audio.bootAccessGranted();
     }
   }
 
@@ -3164,7 +3349,7 @@
     const skipBtn = document.getElementById('skipBootBtn');
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
-        finishBoot();
+        finishBoot(true);
       });
     }
 
@@ -3214,6 +3399,24 @@
         // Safe fallback
       }
     }
+    // Global user gesture unlocker for Web Audio API
+    const unlockUserAudio = () => {
+      audio.unlock();
+    };
+    ['pointerdown', 'click', 'keydown', 'touchstart'].forEach(evt => {
+      window.addEventListener(evt, unlockUserAudio, { passive: true });
+    });
+
+    const bootSection = document.getElementById('section-boot');
+    if (bootSection) {
+      bootSection.addEventListener('pointerdown', (e) => {
+        if (!e.target.closest('button')) {
+          audio.unlock();
+          audio.keyClick();
+        }
+      });
+    }
+
     initMatrixRain();
     const hashOnLoad = window.location.hash.toLowerCase();
     if (hashOnLoad && hashOnLoad !== '#boot' && hashOnLoad !== '#') {
