@@ -578,8 +578,14 @@
         // Fast-forward current typing line instantly
         this.skipCurrentLineFn();
       } else if (!this.isLineTyping && typeof this.advanceNextLineFn === 'function') {
-        // Advance immediately to next line
-        this.advanceNextLineFn();
+        // Advance immediately to next line, clearing any pending auto-advance timer
+        if (this.activeTypingTimer) {
+          clearTimeout(this.activeTypingTimer);
+          this.activeTypingTimer = null;
+        }
+        const advFn = this.advanceNextLineFn;
+        this.advanceNextLineFn = null;
+        advFn();
       }
     }
 
@@ -647,6 +653,15 @@
       this.onCompleteCallback = onComplete;
       this.isPlaying = true;
       this.isInterrupted = false;
+
+      // Clear any prior scene state or timers
+      if (this.activeTypingTimer) {
+        clearTimeout(this.activeTypingTimer);
+        this.activeTypingTimer = null;
+      }
+      this.skipCurrentLineFn = null;
+      this.advanceNextLineFn = null;
+      this.isLineTyping = false;
 
       // Start visuals & audio
       this.overlay.classList.add('active');
@@ -829,15 +844,50 @@
     // Line-by-Line Typewriter Engine
     // ========================================================================
     startLinesTypewriter(linesArray, containerEl, wrapQuotes, onAllDone) {
+      if (this.activeTypingTimer) {
+        clearTimeout(this.activeTypingTimer);
+        this.activeTypingTimer = null;
+      }
+
       let currentLineIdx = 0;
       const totalLines = linesArray.length;
+      let isLineTyping = false;
+      let currentLineCompleteFn = null;
+
+      const clearTimer = () => {
+        if (this.activeTypingTimer) {
+          clearTimeout(this.activeTypingTimer);
+          this.activeTypingTimer = null;
+        }
+      };
+
+      const finishCurrentLineImmediately = (lineIdx, textSlot, cursor, fullText) => {
+        clearTimer();
+        if (textSlot) {
+          textSlot.textContent = fullText;
+        }
+        if (cursor && cursor.parentNode) {
+          cursor.remove();
+        }
+        isLineTyping = false;
+        this.isLineTyping = false;
+        this.autoScrollBottom();
+      };
 
       const advanceToNext = () => {
         if (this.isInterrupted) return;
+        clearTimer();
+
+        // If the previous line was somehow still typing, guarantee full text generation first
+        if (isLineTyping && typeof currentLineCompleteFn === 'function') {
+          currentLineCompleteFn();
+        }
+
         currentLineIdx++;
         if (currentLineIdx < totalLines) {
           typeSingleLine(currentLineIdx);
         } else {
+          isLineTyping = false;
           this.isLineTyping = false;
           this.skipCurrentLineFn = null;
           this.advanceNextLineFn = null;
@@ -847,20 +897,29 @@
 
       const typeSingleLine = (idx) => {
         if (this.isInterrupted) return;
+        clearTimer();
+
+        isLineTyping = true;
         this.isLineTyping = true;
 
-        // Dim previous lines
+        // Dim previous lines and ensure no old cursors linger
         const prevLines = containerEl.querySelectorAll('.cutscene-line-item');
         prevLines.forEach(l => {
           l.classList.remove('active');
           l.classList.add('completed');
+          const oldCursor = l.querySelector('.cutscene-cursor');
+          if (oldCursor) oldCursor.remove();
         });
 
         // Determine full text with opening / closing quotes
         let fullLineText = linesArray[idx];
         if (wrapQuotes) {
-          if (idx === 0) fullLineText = `"${fullLineText}`;
-          if (idx === totalLines - 1) fullLineText = `${fullLineText}"`;
+          if (idx === 0 && !fullLineText.startsWith('"')) {
+            fullLineText = `"${fullLineText}`;
+          }
+          if (idx === totalLines - 1 && !fullLineText.endsWith('"')) {
+            fullLineText = `${fullLineText}"`;
+          }
         }
 
         const lineEl = document.createElement('div');
@@ -868,54 +927,57 @@
         lineEl.innerHTML = `<span class="text-slot"></span><span class="cutscene-cursor"></span>`;
         containerEl.appendChild(lineEl);
 
-        // Auto-scroll content if overflowing
-        this.autoScrollBottom();
-
         const textSlot = lineEl.querySelector('.text-slot');
         const cursor = lineEl.querySelector('.cutscene-cursor');
         let charIdx = 0;
-        const charDelay = 32; // ~30-40ms per character
+        const charDelay = 28; // ~28ms per character for crisp, responsive pacing
+
+        this.autoScrollBottom();
+
+        // Immediate completion hook for user clicks or rapid advances
+        currentLineCompleteFn = () => {
+          finishCurrentLineImmediately(idx, textSlot, cursor, fullLineText);
+        };
 
         // Skip line function for instant click/space speedup
         this.skipCurrentLineFn = () => {
-          if (this.activeTypingTimer) clearTimeout(this.activeTypingTimer);
-          textSlot.textContent = fullLineText;
-          if (cursor) cursor.remove();
-          this.isLineTyping = false;
-          this.autoScrollBottom();
-
-          // Prepare advance to next line on subsequent click or short delay
+          finishCurrentLineImmediately(idx, textSlot, cursor, fullLineText);
+          // Set advance to next line on subsequent click or short delay
           this.advanceNextLineFn = advanceToNext;
-          this.activeTypingTimer = setTimeout(advanceToNext, 650);
+          this.activeTypingTimer = setTimeout(advanceToNext, 750);
         };
 
         const typeNextChar = () => {
           if (this.isInterrupted) return;
+          if (!isLineTyping) return;
+
           if (charIdx < fullLineText.length) {
-            textSlot.textContent += fullLineText.charAt(charIdx);
             charIdx++;
+            textSlot.textContent = fullLineText.slice(0, charIdx);
 
             // Tick on non-whitespace chars
             if (fullLineText.charAt(charIdx - 1).trim()) {
               sound.playKeyboardTick();
             }
 
+            // Periodically ensure view is scrolled as text builds up
+            if (charIdx % 8 === 0 || charIdx === fullLineText.length) {
+              this.autoScrollBottom();
+            }
+
             this.activeTypingTimer = setTimeout(typeNextChar, charDelay);
           } else {
-            // Line typing complete
-            if (cursor) cursor.remove();
-            this.isLineTyping = false;
-            this.skipCurrentLineFn = null;
-            this.autoScrollBottom();
+            // Line typing naturally complete: ensure full line text is set and remove cursor
+            finishCurrentLineImmediately(idx, textSlot, cursor, fullLineText);
 
             // Setup line pause before next line
             this.advanceNextLineFn = advanceToNext;
-            const linePause = idx === totalLines - 1 ? 700 : 1100;
+            const linePause = idx === totalLines - 1 ? 800 : 1200;
             this.activeTypingTimer = setTimeout(advanceToNext, linePause);
           }
         };
 
-        typeNextChar();
+        this.activeTypingTimer = setTimeout(typeNextChar, charDelay);
       };
 
       // Start with line 0
@@ -925,10 +987,7 @@
     autoScrollBottom() {
       if (!this.contentWrapper) return;
       try {
-        this.contentWrapper.scrollTo({
-          top: this.contentWrapper.scrollHeight,
-          behavior: 'smooth'
-        });
+        this.contentWrapper.scrollTop = this.contentWrapper.scrollHeight;
       } catch (_) {}
     }
 
@@ -941,6 +1000,10 @@
       this.isInterrupted = false;
 
       if (this.activeTypingTimer) clearTimeout(this.activeTypingTimer);
+      this.activeTypingTimer = null;
+      this.isLineTyping = false;
+      this.skipCurrentLineFn = null;
+      this.advanceNextLineFn = null;
       sound.stopAmbientDrone();
 
       // Smooth fade to black
