@@ -43,8 +43,13 @@
   // SHA-256 digest of organizer override passphrase (default: ghost-protocol-2026)
   const ORGANIZER_OVERRIDE_HASH = "db92f80fc751eebc031eec7d915b7b7d25bc26c3d4831669dec5dc165838cef0";
 
-  // SHA-256 digest of vault authorization key (Round 3)
+  // SHA-256 digest of vault authorization key (Round 3 legacy fallback)
   const TARGET_PASSWORD_HASH = "c1d9829aaf6b5df9e58bf630b6bd4482d602ef51519bcd082349c58bad3f108a";
+
+  // Target Round 3 Master Seed & System Payload Flag
+  const ROUND3_TARGET_SEED = "12123050";
+  const ROUND3_FLAG = "VAULT-FRAGMENT-7X";
+  const TARGET_ROUND3_SEED_HASH = "6b9af8ca75e9fbef8231613f4a8468181d6971c93daf65ababe4a4d969fd48d8";
   
   // SHA-256 digest of AI directive extraction phrase (Round 4)
   const TARGET_AI_PHRASE_HASH = "f7c113855f51657799b35ffc99f6873663829f5c210f5d45342a6784afb9393a";
@@ -2763,21 +2768,38 @@
     const logs = document.getElementById('pwdTerminalLogs');
     const successAction = document.getElementById('vaultSuccessAction');
 
+    const cleanVal = val.trim();
     // SHA-256 hash validation
-    const hash = await computeSha256(val);
+    const hash = await computeSha256(cleanVal);
 
-    if (hash === TARGET_PASSWORD_HASH) {
+    // Accept Round 3 Master Seed "12123050" or its hash, or legacy passphrase hash fallback
+    const isCorrect = (cleanVal === ROUND3_TARGET_SEED || hash === TARGET_ROUND3_SEED_HASH || hash === TARGET_PASSWORD_HASH);
+
+    // Optional background sync with server.py endpoint /api/round3/verify
+    if (window.location.protocol.startsWith('http')) {
+      fetch('/api/round3/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamId: activeTeamId,
+          seed: cleanVal
+        })
+      }).catch(() => {});
+    }
+
+    if (isCorrect) {
       // SUCCESS!
       triggerGlitchSuccessFlash();
       audio.successChime();
 
-      appendTerminalLog(logs, `[✓] AUTHENTICATION ACCEPTED: Passphrase hash verified.`, 'success');
+      appendTerminalLog(logs, `[✓] AUTHENTICATION ACCEPTED: Master Verification Seed '${cleanVal}' verified.`, 'success');
+      appendTerminalLog(logs, `[✓] SYSTEM PAYLOAD RECOVERED: FLAG{${ROUND3_FLAG}}`, 'success');
       appendTerminalLog(logs, `[✓] CLEARANCE LEVEL 4 GRANTED // SECTOR 7 DECIPHERED.`, 'success');
 
       if (successAction) successAction.classList.remove('hidden');
       if (input) input.disabled = true;
 
-      showToast('✓ VAULT UNLOCKED! Proceed to Round 4.', 'success');
+      showToast(`✓ VAULT UNLOCKED! Flag: ${ROUND3_FLAG}`, 'success');
 
     } else {
       // FAILURE!
@@ -2785,8 +2807,8 @@
       updateAttemptsDisplay();
       audio.errorBuzz();
 
-      appendTerminalLog(logs, `[✗] ACCESS DENIED: Invalid key '${val}'. Hash signature mismatch.`, 'error');
-      showToast(`⚠ ACCESS DENIED: Invalid passphrase. (${attemptsRemaining} attempts left)`, 'error');
+      appendTerminalLog(logs, `[✗] ACCESS DENIED: Invalid seed '${cleanVal}'. Cryptographic checksum failed.`, 'error');
+      showToast(`⚠ ACCESS DENIED: Invalid Master Seed. (${attemptsRemaining} attempts left)`, 'error');
 
       if (input) input.value = '';
 
@@ -3088,18 +3110,22 @@
 
         tbody.innerHTML = '';
         if (!teamsList || teamsList.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-dim">No teams registered</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="text-dim">No teams registered</td></tr>';
           return;
         }
         teamsList.forEach(t => {
           const tr = document.createElement('tr');
-          const statusHtml = t.completed 
+          const r1StatusHtml = t.completed 
             ? '<span class="text-green" style="font-weight:700">✓ COMPLETED</span>' 
             : '<span class="text-dim">IN PROGRESS</span>';
+          const r3StatusHtml = t.round3Completed
+            ? '<span class="text-green" style="font-weight:700">✓ CRACKED</span>'
+            : '<span class="text-dim">LOCKED</span>';
           const completedAtText = t.completedAt ? escapeHtml(t.completedAt) : '--';
           tr.innerHTML = `
             <td><strong>${escapeHtml(t.teamName)}</strong> <span class="text-dim">(${escapeHtml(t.teamId)})</span></td>
-            <td>${statusHtml}</td>
+            <td>${r1StatusHtml}</td>
+            <td>${r3StatusHtml}</td>
             <td>${t.attempts}</td>
             <td>${completedAtText}</td>
             <td><button type="button" class="cyber-button sm" data-reset-team-id="${escapeHtml(t.teamId)}">RESET</button></td>
@@ -3117,6 +3143,11 @@
               localTeams[teamIdToReset].completed = false;
               localTeams[teamIdToReset].attempts = 0;
               localTeams[teamIdToReset].completedAt = null;
+              if (localTeams[teamIdToReset].round3) {
+                localTeams[teamIdToReset].round3.completed = false;
+                localTeams[teamIdToReset].round3.attempts = 0;
+                localTeams[teamIdToReset].round3.completedAt = null;
+              }
               saveLocalTeamsData(localTeams);
             }
             // Sync with backend if online
@@ -3136,7 +3167,7 @@
         });
       } catch (e) {
         console.warn('Failed to load admin telemetry:', e);
-        tbody.innerHTML = '<tr><td colspan="5" class="text-red">Telemetry fetch error</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-red">Telemetry fetch error</td></tr>';
       }
     }
 

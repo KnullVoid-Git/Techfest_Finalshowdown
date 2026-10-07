@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 BREACH — Final Showdown CTF Server
-Provides static asset serving along with secure server-side Round 1 validation
+Provides static asset serving along with secure server-side Round 1 & Round 3 validation
 and team progress tracking. Zero third-party dependencies (pure Python 3 stdlib).
 """
 
@@ -22,6 +22,10 @@ HOST = "127.0.0.1"
 # NEVER exposed to clients or in API responses.
 ROUND1_PASSWORD = os.environ.get("ROUND1_PASSWORD", "PrachetRay2005")
 
+# Target calculation for Round 3: (2005 + 482917) * 25 = 12123050
+ROUND3_TARGET_SEED = "12123050"
+ROUND3_FLAG = "VAULT-FRAGMENT-7X"
+
 DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "teams_db.json")
 DB_LOCK = threading.Lock()
 
@@ -30,6 +34,11 @@ DEFAULT_TEAMS = {
         "teamId": "team-alpha",
         "teamName": "Team Alpha",
         "round1": {
+            "completed": False,
+            "attempts": 0,
+            "completedAt": None
+        },
+        "round3": {
             "completed": False,
             "attempts": 0,
             "completedAt": None
@@ -42,12 +51,22 @@ DEFAULT_TEAMS = {
             "completed": False,
             "attempts": 0,
             "completedAt": None
+        },
+        "round3": {
+            "completed": False,
+            "attempts": 0,
+            "completedAt": None
         }
     },
     "team-gamma": {
         "teamId": "team-gamma",
         "teamName": "Team Gamma",
         "round1": {
+            "completed": False,
+            "attempts": 0,
+            "completedAt": None
+        },
+        "round3": {
             "completed": False,
             "attempts": 0,
             "completedAt": None
@@ -91,6 +110,11 @@ def get_or_create_team(team_id, team_name=None):
             "teamId": clean_id,
             "teamName": team_name.strip() if team_name else f"Team {clean_id.replace('-', ' ').title()}",
             "round1": {
+                "completed": False,
+                "attempts": 0,
+                "completedAt": None
+            },
+            "round3": {
                 "completed": False,
                 "attempts": 0,
                 "completedAt": None
@@ -153,12 +177,14 @@ class BreachHandler(http.server.SimpleHTTPRequestHandler):
             teams_status = []
             for t in data.values():
                 r1 = t.get("round1", {})
+                r3 = t.get("round3", {})
                 teams_status.append({
                     "teamId": t["teamId"],
                     "teamName": t["teamName"],
                     "completed": bool(r1.get("completed", False)),
                     "attempts": int(r1.get("attempts", 0)),
-                    "completedAt": r1.get("completedAt")
+                    "completedAt": r1.get("completedAt"),
+                    "round3Completed": bool(r3.get("completed", False))
                 })
             self.send_json(200, {"teams": teams_status})
             return
@@ -198,9 +224,6 @@ class BreachHandler(http.server.SimpleHTTPRequestHandler):
             team_id = body.get("teamId", "team-alpha").strip().lower()
             submitted = body.get("password", "")
 
-            # Server-side validation rules:
-            # 1. Trim leading and trailing spaces
-            # 2. Case-insensitive comparison
             trimmed_submitted = submitted.strip().lower()
             correct_normalized = ROUND1_PASSWORD.strip().lower()
 
@@ -213,7 +236,6 @@ class BreachHandler(http.server.SimpleHTTPRequestHandler):
             r1 = team.setdefault("round1", {"completed": False, "attempts": 0, "completedAt": None})
 
             if trimmed_submitted == correct_normalized:
-                # Correct password
                 r1["completed"] = True
                 if not r1.get("completedAt"):
                     r1["completedAt"] = datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M:%S UTC")
@@ -225,7 +247,6 @@ class BreachHandler(http.server.SimpleHTTPRequestHandler):
                     "completedAt": r1["completedAt"]
                 })
             else:
-                # Incorrect password
                 r1["attempts"] = r1.get("attempts", 0) + 1
                 save_db(data)
                 self.send_json(200, {
@@ -233,6 +254,42 @@ class BreachHandler(http.server.SimpleHTTPRequestHandler):
                     "completed": False,
                     "attempts": r1["attempts"],
                     "error": "INCORRECT PASSWORD\nTRY AGAIN"
+                })
+            return
+
+        # API: Verify Round 3 Master Seed Server-Side
+        if path == "/api/round3/verify":
+            team_id = body.get("teamId", "team-alpha").strip().lower()
+            submitted_seed = str(body.get("seed", "")).strip()
+
+            data = load_db()
+            if team_id not in data:
+                get_or_create_team(team_id)
+                data = load_db()
+
+            team = data[team_id]
+            r3 = team.setdefault("round3", {"completed": False, "attempts": 0, "completedAt": None})
+
+            if submitted_seed == ROUND3_TARGET_SEED:
+                r3["completed"] = True
+                if not r3.get("completedAt"):
+                    r3["completedAt"] = datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M:%S UTC")
+                save_db(data)
+                self.send_json(200, {
+                    "success": True,
+                    "completed": True,
+                    "flag": ROUND3_FLAG,
+                    "message": "ACCESS GRANTED — VAULT UNLOCKED",
+                    "completedAt": r3["completedAt"]
+                })
+            else:
+                r3["attempts"] = r3.get("attempts", 0) + 1
+                save_db(data)
+                self.send_json(200, {
+                    "success": False,
+                    "completed": False,
+                    "attempts": r3["attempts"],
+                    "error": "INVALID MASTER SEED"
                 })
             return
 
@@ -246,11 +303,21 @@ class BreachHandler(http.server.SimpleHTTPRequestHandler):
                     "attempts": 0,
                     "completedAt": None
                 }
+                data[team_id]["round3"] = {
+                    "completed": False,
+                    "attempts": 0,
+                    "completedAt": None
+                }
                 save_db(data)
                 self.send_json(200, {"success": True, "teamId": team_id})
             elif team_id == "all":
                 for t in data.values():
                     t["round1"] = {
+                        "completed": False,
+                        "attempts": 0,
+                        "completedAt": None
+                    }
+                    t["round3"] = {
                         "completed": False,
                         "attempts": 0,
                         "completedAt": None
@@ -274,7 +341,7 @@ def run_server():
         print(f"==================================================")
         print(f"BREACH — Final Showdown Server active")
         print(f"URL: http://{HOST}:{PORT}/")
-        print(f"Secure Server-Side Password Auth: ACTIVE")
+        print(f"Secure Server-Side Auth: ACTIVE")
         print(f"==================================================")
         try:
             httpd.serve_forever()

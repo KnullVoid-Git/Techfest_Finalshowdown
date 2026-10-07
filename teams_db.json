@@ -6,6 +6,11 @@
       "completed": false,
       "attempts": 0,
       "completedAt": null
+    },
+    "round3": {
+      "completed": false,
+      "attempts": 0,
+      "completedAt": null
     }
   },
   "team-beta": {
@@ -15,12 +20,22 @@
       "completed": false,
       "attempts": 0,
       "completedAt": null
+    },
+    "round3": {
+      "completed": false,
+      "attempts": 0,
+      "completedAt": null
     }
   },
   "team-gamma": {
     "teamId": "team-gamma",
     "teamName": "Team Gamma",
     "round1": {
+      "completed": false,
+      "attempts": 0,
+      "completedAt": null
+    },
+    "round3": {
       "completed": false,
       "attempts": 0,
       "completedAt": null

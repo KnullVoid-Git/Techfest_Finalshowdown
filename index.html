@@ -922,46 +922,33 @@
               <span class="dot yellow"></span>
               <span class="dot green"></span>
             </div>
-            <div class="terminal-title">forensics_dump_clues.txt</div>
+            <div class="terminal-title">system_crash_telemetry.log</div>
             <div class="terminal-specs">READ-ONLY</div>
           </div>
           <div class="clues-card-body custom-scroll">
             <div class="clue-intro">
-              <p class="text-cyan">// EXFILTRATED INTELLIGENCE NOTES:</p>
-              <p>The adversary's secondary vault key has been partially recovered from memory buffers. Analyze the extracted forensic clues below to synthesize the master authorization passphrase.</p>
+              <p class="text-cyan">// EXFILTRATED SYSTEM CRASH TELEMETRY:</p>
+              <p>The adversary's vault daemon halted during boot due to missing environment verifications. Analyze the crash dump below to reconstruct the Master Verification Seed.</p>
             </div>
 
             <!-- ============================================================= -->
-            <!-- EDITABLE ROUND 3 CLUE LINES                                   -->
-            <!-- Organizers: You can edit or tweak these clue lines easily!    -->
+            <!-- ROUND 3 SYSTEM TELEMETRY CLUE LINES                           -->
             <!-- ============================================================= -->
-            <div class="clue-list">
-              <div class="clue-item">
-                <span class="clue-number">[CLUE 01]</span>
-                <span class="clue-content">The prefix borrows the first two letters of the current operation code ("CYBER").</span>
-              </div>
-              <div class="clue-item">
-                <span class="clue-number">[CLUE 02]</span>
-                <span class="clue-content">The timestamp matches the active competition year (4-digit format: 2026).</span>
-              </div>
-              <div class="clue-item">
-                <span class="clue-number">[CLUE 03]</span>
-                <span class="clue-content">The sector letter is the unknown forensic variable designation from Section 1 ("X").</span>
-              </div>
-              <div class="clue-item">
-                <span class="clue-number">[CLUE 04]</span>
-                <span class="clue-content">A single terminal punctuation mark commands execution ("!").</span>
-              </div>
-              <div class="clue-item">
-                <span class="clue-number">[CLUE 05]</span>
-                <span class="clue-content">Format strictly adheres to uppercase without spaces. Case sensitivity is enforced.</span>
-              </div>
-            </div>
-            <!-- END EDITABLE ROUND 3 CLUE LINES -->
+            <div class="system-crash-log" style="background: rgba(0,0,0,0.65); border: 1px solid rgba(0,255,170,0.3); border-radius: 4px; padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.6; color: #a9b7c6; overflow-x: auto; white-space: pre-wrap; margin-bottom: 14px; box-shadow: inset 0 0 12px rgba(0,0,0,0.7);">
+<span style="color:#6c757d">2026-10-07T22:14:01.002Z</span> <span class="text-green" style="font-weight:700">[SYS_INIT]</span> Core system parameters loaded.
+<span style="color:#6c757d">2026-10-07T22:14:01.045Z</span> <span class="text-cyan" style="font-weight:700">[DEBUG]</span> Active registers: REG_A=0x03, REG_B=0x07, REG_C=0x01, REG_D=0x05, REG_E=0x09
+<span style="color:#6c757d">2026-10-07T22:14:02.110Z</span> <span class="text-yellow" style="font-weight:700">[WARN]</span> Terminal unlock mechanism requires Master Verification Seed.
+<span style="color:#6c757d">2026-10-07T22:14:02.112Z</span> <span class="text-red" style="font-weight:700">[ERROR]</span> Missing environment variable: [ENV_STAGE1_VERDICT]
+<span style="color:#6c757d">2026-10-07T22:14:02.113Z</span> <span class="text-red" style="font-weight:700">[ERROR]</span> Missing environment variable: [ENV_STAGE2_VERDICT]
+<span style="color:#6c757d">2026-10-07T22:14:04.001Z</span> <span class="text-green" style="font-weight:700">[SYS_EXEC]</span> Master Seed Generation Rule:
+  -&gt; REG_SUM = REG_A + REG_B + REG_C + REG_D + REG_E
+  -&gt; SEED = (ENV_STAGE1_VERDICT + ENV_STAGE2_VERDICT) * REG_SUM
+  -&gt; Submit computed SEED to web terminal endpoint /verify to receive system payload.
+<span style="color:#6c757d">2026-10-07T22:14:05.882Z</span> <span class="text-red" style="font-weight:700">[FATAL]</span> Authorization halted: Unresolved Stage Verifications.</div>
 
             <div class="clue-tip-box">
               <span class="tip-icon">💡</span>
-              <span class="tip-text">Synthesize: [2 ALPHA PREFIX] + [4-DIGIT YEAR] + [1 SECTOR ALPHA] + [1 SPECIAL SYMBOL]</span>
+              <span class="tip-text">HINT: Convert hex registers to decimal &amp; sum them (REG_SUM). Correlate Stage 1 (Recon exfiltrated year) &amp; Stage 2 (Phishing code) verdicts to compute SEED.</span>
             </div>
           </div>
         </div>
@@ -1036,14 +1023,18 @@
 
             <!-- Terminal Output Logs -->
             <div class="terminal-log-stream custom-scroll" id="pwdTerminalLogs">
-              <div class="log-line">> System ready. Enter vault passphrase to decrypt Sector 7 node.</div>
+              <div class="log-line text-cyan">> [SYS_INIT] Core system parameters loaded.</div>
+              <div class="log-line">> [DEBUG] Active registers: REG_A=0x03, REG_B=0x07, REG_C=0x01, REG_D=0x05, REG_E=0x09</div>
+              <div class="log-line text-yellow">> [WARN] Terminal unlock mechanism requires Master Verification Seed.</div>
+              <div class="log-line text-red">> [FATAL] Authorization halted: Unresolved Stage Verifications.</div>
+              <div class="log-line">> Enter computed Master Verification Seed (SEED) to unlock vault.</div>
             </div>
 
             <!-- Interactive Input Field -->
             <form class="terminal-input-form" id="pwdTerminalForm" autocomplete="off">
-              <span class="terminal-prompt-prefix">vault_auth></span>
+              <span class="terminal-prompt-prefix">seed_auth></span>
               <div class="input-wrapper">
-                <input type="text" id="passwordInput" class="terminal-input" placeholder="ENTER PASSPHRASE..." spellcheck="false" autocomplete="off">
+                <input type="text" id="passwordInput" class="terminal-input" placeholder="ENTER MASTER SEED..." spellcheck="false" autocomplete="off">
                 <span class="input-cursor blink">█</span>
               </div>
               <button type="submit" class="cyber-button primary-btn sm" id="submitPwdBtn">SUBMIT</button>
@@ -1053,7 +1044,7 @@
             <div class="vault-success-action hidden" id="vaultSuccessAction">
               <div class="success-banner text-green">
                 <span class="success-icon">🔓</span>
-                <span>VAULT DECRYPTED // AUTHORIZATION GRANTED // SECTOR 7 ACCESSIBLE</span>
+                <span>VAULT DECRYPTED // FLAG: VAULT-FRAGMENT-7X // SECTOR 7 ACCESSIBLE</span>
               </div>
               <button class="cyber-button primary-btn" id="proceedToRound4Btn">
                 <span class="btn-bracket">[</span>
@@ -1366,13 +1357,14 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
                   <tr>
                     <th>TEAM</th>
                     <th>R1 STATUS</th>
+                    <th>R3 STATUS</th>
                     <th>ATTEMPTS</th>
                     <th>COMPLETED AT</th>
                     <th>ACTION</th>
                   </tr>
                 </thead>
                 <tbody id="adminTeamsTableBody">
-                  <tr><td colspan="5" class="text-dim">Loading telemetry...</td></tr>
+                  <tr><td colspan="6" class="text-dim">Loading telemetry...</td></tr>
                 </tbody>
               </table>
             </div>
