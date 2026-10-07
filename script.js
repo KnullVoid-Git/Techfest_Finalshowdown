@@ -387,6 +387,16 @@
   function goToSection(stageNum, bypassLock = false) {
     if (!sections[stageNum]) return;
 
+    // Cutscene 1 Trigger before Round 1
+    if ((stageNum === 2 || stageNum === '2') && currentStage === 1 && !bypassLock) {
+      if (window.CutscenePlayer && !window.CutscenePlayer.hasWatched('cutscene-1')) {
+        window.CutscenePlayer.play('cutscene-1', () => {
+          goToSection(2, true);
+        });
+        return;
+      }
+    }
+
     // Strict Stage & Checkpoint Guards
     if (stageNum === 'checkpoint') {
       if (!round1Completed && !adminOverrideActive && !bypassLock) {
@@ -405,6 +415,16 @@
         audio.errorBuzz();
         goToSection('checkpoint');
         return;
+      }
+
+      // Cutscene 2 Trigger before Round 2 (after Round 1 & Sponsor checkpoint)
+      if ((stageNum === 3 || stageNum === '3') && !bypassLock) {
+        if (window.CutscenePlayer && !window.CutscenePlayer.hasWatched('cutscene-2-partB')) {
+          window.CutscenePlayer.playCutscene2(() => {
+            goToSection(3, true);
+          });
+          return;
+        }
       }
     }
 
@@ -1403,7 +1423,13 @@
 
         audio.successChime();
         triggerChannelDecryptedGlitch(() => {
-          goToSection(3);
+          if (window.CutscenePlayer && !window.CutscenePlayer.hasWatched('cutscene-2-partB')) {
+            window.CutscenePlayer.playCutscene2(() => {
+              goToSection(3, true);
+            });
+          } else {
+            goToSection(3, true);
+          }
         });
       });
     }
@@ -2759,6 +2785,7 @@
           showToast('✓ ORGANIZER CONSOLE AUTHORIZED', 'success');
           renderAdminTeamsTelemetry();
           renderAdminHandlesTable();
+          renderAdminFragments();
         } else {
           audio.errorBuzz();
           if (authFeedback) {
@@ -2852,6 +2879,60 @@
       refreshTeamsBtn.addEventListener('click', () => {
         renderAdminTeamsTelemetry();
         showToast('Telemetry refreshed', 'info');
+      });
+    }
+
+    // Cutscene Replay & Reset Handlers
+    const replayC1Btn = document.getElementById('adminReplayCutscene1Btn');
+    if (replayC1Btn) {
+      replayC1Btn.addEventListener('click', () => {
+        closeConsole();
+        if (window.CutscenePlayer) {
+          window.CutscenePlayer.play('cutscene-1');
+        }
+      });
+    }
+
+    const replayC2Btn = document.getElementById('adminReplayCutscene2Btn');
+    if (replayC2Btn) {
+      replayC2Btn.addEventListener('click', () => {
+        closeConsole();
+        if (window.CutscenePlayer) {
+          window.CutscenePlayer.playCutscene2();
+        }
+      });
+    }
+
+    const resetCutscenesBtn = document.getElementById('adminResetCutscenesBtn');
+    if (resetCutscenesBtn) {
+      resetCutscenesBtn.addEventListener('click', () => {
+        if (window.CutscenePlayer) {
+          window.CutscenePlayer.resetWatched();
+        }
+        showToast('↺ Cutscene progress reset (will play on next transitions)', 'info');
+        audio.errorBuzz();
+      });
+    }
+
+    function renderAdminFragments() {
+      const textEl = document.getElementById('adminFragmentsText');
+      if (!textEl) return;
+      if (window.CutscenePlayer) {
+        const frags = window.CutscenePlayer.getFragments();
+        const entries = Object.entries(frags);
+        if (entries.length > 0) {
+          textEl.textContent = entries.map(([k, v]) => `FRAGMENT ${k}: ${v}`).join(' | ') + ' (Recovered)';
+        } else {
+          textEl.textContent = 'No fragments recovered yet';
+        }
+      }
+    }
+
+    const refreshFragmentsBtn = document.getElementById('adminRefreshFragmentsBtn');
+    if (refreshFragmentsBtn) {
+      refreshFragmentsBtn.addEventListener('click', () => {
+        renderAdminFragments();
+        showToast('Fragments telemetry refreshed', 'info');
       });
     }
 
@@ -3029,7 +3110,13 @@
     const beginBtn = document.getElementById('beginInvestigationBtn');
     if (beginBtn) {
       beginBtn.addEventListener('click', () => {
-        goToSection(2); // Jump to Round 1: Reconnaissance
+        if (window.CutscenePlayer && !window.CutscenePlayer.hasWatched('cutscene-1')) {
+          window.CutscenePlayer.play('cutscene-1', () => {
+            goToSection(2, true);
+          });
+        } else {
+          goToSection(2);
+        }
       });
     }
 

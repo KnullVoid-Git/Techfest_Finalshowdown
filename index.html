@@ -5,17 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BREACH — Final Showdown | Tech Fest CTF</title>
 
-  <!-- Google Fonts: JetBrains Mono -->
+  <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
 
   <!-- GSAP & ScrollTrigger from cdnjs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
-  <!-- Stylesheet -->
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="cutscene.css">
 </head>
 <body>
 
@@ -1202,11 +1203,23 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
           </div>
 
           <div class="admin-actions-grid">
+            <button class="cyber-button sm" id="adminReplayCutscene1Btn">🎬 REPLAY CUTSCENE 1</button>
+            <button class="cyber-button sm" id="adminReplayCutscene2Btn">🎬 REPLAY CUTSCENE 2 (A+B)</button>
+            <button class="cyber-button sm" id="adminResetCutscenesBtn">↺ RESET CUTSCENE PROGRESS</button>
             <button class="cyber-button sm" id="adminSkipCheckpointBtn">⚡ SKIP SPONSOR CHECKPOINT</button>
             <button class="cyber-button sm" id="adminResetCheckpointBtn">↺ RESET CHECKPOINT</button>
             <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET ATTEMPTS (TO 3)</button>
             <button class="cyber-button sm" id="adminResetR2Btn">RESET & RESHUFFLE ROUND 2</button>
             <button class="cyber-button primary-btn sm" id="adminForceUnlockR3Btn">FORCE-UNLOCK ROUND 3</button>
+          </div>
+
+          <!-- Recovered Fragments Telemetry -->
+          <div class="admin-telemetry-section" id="adminFragmentsSection">
+            <div class="admin-subhead text-green">// RECOVERED EVIDENCE FRAGMENTS</div>
+            <div id="adminFragmentsDisplay" style="padding: 10px 14px; background: rgba(10,25,18,0.7); border: 1px solid rgba(107,255,176,0.3); font-family: var(--font-mono); font-size: 0.85rem; color: #6BFFB0; display: flex; align-items: center; justify-content: space-between;">
+              <span id="adminFragmentsText">FRAGMENT 01: 1 (Recovered)</span>
+              <button type="button" class="cyber-button sm" id="adminRefreshFragmentsBtn" style="padding: 3px 8px; font-size: 0.7rem;">⟳ REFRESH</button>
+            </div>
           </div>
 
           <!-- Sponsor Checkpoint Instagram Handles Telemetry -->
@@ -1253,6 +1266,8 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
     </div>
   </div>
 
+  <!-- Cinematic Cutscene Engine -->
+  <script src="cutscene.js"></script>
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 </body>

@@ -1,0 +1,496 @@
+/* ==========================================================================
+   CINEMATIC CUTSCENE SYSTEM STYLES
+   Pure black movie / video game aesthetic with CRT scanlines & neon green accents
+   ========================================================================== */
+
+:root {
+  --cutscene-bg: #000000;
+  --cutscene-text: #ffffff;
+  --cutscene-dim: rgba(255, 255, 255, 0.65);
+  --cutscene-grey: #8e8e93;
+  --cutscene-neon: #6BFFB0;
+  --cutscene-neon-glow: rgba(107, 255, 176, 0.45);
+  --cutscene-border: rgba(107, 255, 176, 0.35);
+  --cutscene-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --cutscene-font-mono: 'JetBrains Mono', 'Share Tech Mono', monospace;
+}
+
+/* 1. Fullscreen Main Cutscene Overlay */
+#cutsceneOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999990;
+  background: var(--cutscene-bg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  user-select: none;
+}
+
+#cutsceneOverlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 2. Cinematic Letterbox Bars (Top & Bottom) */
+.cutscene-letterbox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: clamp(38px, 7.5vh, 75px);
+  background: #000000;
+  z-index: 999999;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.cutscene-letterbox-top {
+  top: 0;
+  transform: translateY(-100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cutscene-letterbox-bottom {
+  bottom: 0;
+  transform: translateY(100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#cutsceneOverlay.letterboxed .cutscene-letterbox-top,
+#cutsceneOverlay.letterboxed .cutscene-letterbox-bottom {
+  transform: translateY(0);
+}
+
+/* 3. Subtle Vignette, Scanlines & Film Grain */
+.cutscene-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 45%, rgba(0, 0, 0, 0.88) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cutscene-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.3) 3px,
+    rgba(0, 0, 0, 0.3) 4px
+  );
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.cutscene-grain {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 0);
+  background-size: 4px 4px;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* 4. Background Matrix/Binary Particle Canvas */
+#cutsceneParticleCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.12;
+}
+
+/* 5. Center Content Container */
+.cutscene-content-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 90%;
+  max-width: 820px;
+  max-height: calc(100vh - clamp(80px, 16vh, 160px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(1rem, 2.5vh, 2rem) clamp(1rem, 3vw, 2.5rem);
+  color: var(--cutscene-text);
+  font-family: var(--cutscene-font-sans);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE */
+  display: flex;
+  flex-direction: column;
+}
+
+.cutscene-content-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+/* 6. Label */
+.cutscene-label {
+  font-family: var(--cutscene-font-mono);
+  font-size: clamp(0.72rem, 1.25vw, 0.85rem);
+  color: var(--cutscene-grey);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.6s ease, transform 0.6s ease, letter-spacing 0.8s ease;
+}
+
+.cutscene-label.revealed {
+  opacity: 1;
+  transform: translateY(0);
+  letter-spacing: 0.22em;
+}
+
+/* 7. Title with Glitch Effect */
+.cutscene-title {
+  font-family: var(--cutscene-font-sans);
+  font-size: clamp(1.8rem, 3.8vw, 2.75rem);
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  margin-bottom: clamp(1.5rem, 3vh, 2.25rem);
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  position: relative;
+}
+
+.cutscene-title.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cutscene-title.glitch-flash {
+  animation: cutscene-title-glitch 0.35s ease-out forwards;
+}
+
+@keyframes cutscene-title-glitch {
+  0% {
+    transform: translate(0);
+    text-shadow: none;
+  }
+  20% {
+    transform: translate(-3px, 2px);
+    text-shadow: 2px 0 #ff0055, -2px 0 #00ffff;
+  }
+  40% {
+    transform: translate(3px, -2px);
+    text-shadow: -2px 0 #ff0055, 2px 0 #00ffff;
+  }
+  60% {
+    transform: translate(-2px, 0);
+    text-shadow: 1px 0 #ff0055, -1px 0 #00ffff;
+  }
+  80% {
+    transform: translate(2px, 1px);
+    text-shadow: 0 0 transparent;
+  }
+  100% {
+    transform: translate(0);
+    text-shadow: none;
+  }
+}
+
+/* 8. Narration Lines & Typewriter Container */
+.cutscene-lines-container {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2vh, 1.45rem);
+}
+
+.cutscene-line-item {
+  font-family: var(--cutscene-font-sans);
+  font-size: clamp(1.02rem, 1.8vw, 1.28rem);
+  line-height: 1.62;
+  color: var(--cutscene-dim);
+  transition: color 0.35s ease, opacity 0.35s ease;
+  word-break: break-word;
+}
+
+.cutscene-line-item.active {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.cutscene-line-item.completed {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* Blinking Terminal Cursor */
+.cutscene-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.18em;
+  background: var(--cutscene-neon);
+  vertical-align: -0.18em;
+  margin-left: 3px;
+  box-shadow: 0 0 8px var(--cutscene-neon);
+  animation: cutscene-cursor-blink 0.75s infinite steps(2, start);
+}
+
+@keyframes cutscene-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Pulse Hold on Key Final Lines */
+.pulse-hold {
+  animation: cutscene-text-pulse 2s infinite ease-in-out;
+}
+
+@keyframes cutscene-text-pulse {
+  0%, 100% {
+    color: #ffffff;
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    color: var(--cutscene-neon);
+    text-shadow: 0 0 12px var(--cutscene-neon);
+  }
+}
+
+/* 9. Cutscene 2 Part A: Breach & Fragment Panel */
+.cutscene-breach-panel {
+  background: rgba(10, 24, 18, 0.94);
+  border: 1px solid var(--cutscene-border);
+  border-radius: 12px;
+  padding: clamp(1.25rem, 2.5vw, 1.85rem);
+  margin-bottom: clamp(1.5rem, 2.8vh, 2.2rem);
+  box-shadow: 0 0 35px rgba(107, 255, 176, 0.12), inset 0 0 20px rgba(107, 255, 176, 0.05);
+  opacity: 0;
+  transform: scale(0.96) translateY(10px);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cutscene-breach-panel.revealed {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.breach-badge {
+  font-family: var(--cutscene-font-mono);
+  font-size: clamp(0.85rem, 1.4vw, 1.05rem);
+  font-weight: 800;
+  color: var(--cutscene-neon);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.45rem;
+}
+
+.breach-subtitle {
+  font-family: var(--cutscene-font-sans);
+  font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+  color: #ededed;
+  margin-bottom: 1.25rem;
+}
+
+.breach-fragment-val {
+  font-family: var(--cutscene-font-mono);
+  font-size: clamp(1.9rem, 3.8vw, 2.8rem);
+  font-weight: 900;
+  color: var(--cutscene-neon);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 22px rgba(107, 255, 176, 0.65);
+  margin-bottom: 0.65rem;
+  display: inline-block;
+  transform-origin: left center;
+}
+
+.breach-fragment-val.pulse-glow {
+  animation: fragment-pulse-glow 2.4s infinite ease-in-out;
+}
+
+@keyframes fragment-pulse-glow {
+  0%, 100% {
+    text-shadow: 0 0 16px rgba(107, 255, 176, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 0 32px rgba(107, 255, 176, 0.95), 0 0 45px rgba(107, 255, 176, 0.4);
+    transform: scale(1.02);
+  }
+}
+
+.breach-note {
+  font-family: var(--cutscene-font-mono);
+  font-size: clamp(0.75rem, 1.2vw, 0.88rem);
+  color: var(--cutscene-grey);
+}
+
+/* 10. The Ghost Response Block */
+.ghost-response-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.ghost-response-container.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ghost-speaker-intro {
+  font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.ghost-quote-wrapper {
+  border-left: 3px solid #5a5a5a;
+  padding-left: clamp(1rem, 2vw, 1.4rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  margin: 0.25rem 0;
+}
+
+.ghost-quote-line {
+  font-size: clamp(1.02rem, 1.7vw, 1.25rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.next-round-line {
+  font-size: clamp(1.05rem, 1.7vw, 1.25rem);
+  color: #ffffff;
+  font-weight: 500;
+  margin-top: 0.4rem;
+}
+
+/* 11. Screen Glitch Flash & Camera Shake */
+.cutscene-screen-shake {
+  animation: cutscene-camera-shake 0.4s ease-out;
+}
+
+@keyframes cutscene-camera-shake {
+  0% { transform: translate(0, 0); }
+  15% { transform: translate(-6px, 4px); }
+  30% { transform: translate(6px, -5px); }
+  45% { transform: translate(-4px, 3px); }
+  60% { transform: translate(4px, -2px); }
+  75% { transform: translate(-2px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+.cutscene-glitch-flash-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(107, 255, 176, 0.45);
+  mix-blend-mode: screen;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.cutscene-glitch-flash-overlay.trigger-flash {
+  animation: cutscene-green-flash 0.35s ease-out forwards;
+}
+
+@keyframes cutscene-green-flash {
+  0% { opacity: 0.85; }
+  50% { opacity: 0.35; }
+  100% { opacity: 0; }
+}
+
+/* 12. Floating Controls */
+.cutscene-audio-btn {
+  position: absolute;
+  top: clamp(12px, 3vh, 24px);
+  right: clamp(16px, 3.5vw, 36px);
+  z-index: 9999999;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #cccccc;
+  padding: 6px 14px;
+  font-family: var(--cutscene-font-mono);
+  font-size: clamp(0.72rem, 1.2vw, 0.82rem);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.cutscene-audio-btn:hover {
+  border-color: var(--cutscene-neon);
+  color: var(--cutscene-neon);
+  background: rgba(107, 255, 176, 0.08);
+}
+
+.cutscene-skip-btn {
+  position: absolute;
+  bottom: clamp(14px, 3vh, 24px);
+  right: clamp(16px, 3.5vw, 36px);
+  z-index: 9999999;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #cccccc;
+  padding: 7px 18px;
+  font-family: var(--cutscene-font-mono);
+  font-size: clamp(0.75rem, 1.2vw, 0.85rem);
+  letter-spacing: 0.12em;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.cutscene-skip-btn:hover {
+  border-color: var(--cutscene-neon);
+  color: var(--cutscene-neon);
+  background: rgba(107, 255, 176, 0.12);
+  box-shadow: 0 0 14px rgba(107, 255, 176, 0.25);
+}
+
+.cutscene-advance-hint {
+  position: absolute;
+  bottom: clamp(14px, 3vh, 24px);
+  left: clamp(16px, 3.5vw, 36px);
+  z-index: 9999999;
+  font-family: var(--cutscene-font-mono);
+  font-size: clamp(0.68rem, 1.1vw, 0.78rem);
+  color: #666666;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+/* 13. Accessibility: Prefers-Reduced-Motion */
+@media (prefers-reduced-motion: reduce) {
+  #cutsceneOverlay,
+  .cutscene-letterbox,
+  .cutscene-title,
+  .cutscene-label,
+  .cutscene-breach-panel,
+  .ghost-response-container {
+    transition: none !important;
+  }
+  .cutscene-screen-shake,
+  .cutscene-glitch-flash-overlay,
+  .cutscene-title.glitch-flash,
+  .breach-fragment-val.pulse-glow,
+  .pulse-hold {
+    animation: none !important;
+  }
+}
