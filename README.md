@@ -59,14 +59,36 @@ A single-page, fully static, zero-backend cybersecurity competition / CTF challe
 - The AI will output the embedded security fragment.
 - Submissions are normalized (uppercase, remove non-alphanumeric) and validated via SHA-256 against `f1e0707fa6b15015ee562c220f42598b062ee31595431efb4513f9f39b479cfb`.
 - Incorrect submissions display `"NOT THE FRAGMENT"` with a 3-second cooldown and unlimited retries.
-- On correct submission, plays the fullscreen **MISSION COMPLETE** glitch animation and launches the **CASE CLOSED** finish screen.
+- On correct submission, plays the glitch **`KEY III RECOVERED`** animation, stores Key III, and unlocks the **`PROCEED TO THE VAULT`** action.
 
-### 6. Finish Screen (`CASE CLOSED`)
+### 6. Round 4 — The Vault (`04 THE VAULT`)
+- **Evidence Locker**: Displays all recovered keys (Key I from Round 1, Key II verification code from Round 2, Key III phrase from Round 3) in monospace cards.
+- **Titanium Vault Door (SVG/GSAP)**:
+  - Concentric rotating rings with idle GSAP motion (outer gear ring, middle dial ring, inner core ring).
+  - Heavy radial perimeter bolts and three keyholes labelled I, II, III.
+- **4-Digit Code Display & Keypad**:
+  - 4 discrete slot display boxes with active indicator.
+  - On-screen cyber numeric keypad (0-9, backspace, Enter) + full physical keyboard support. Digits only.
+  - Cryptographically validated using SHA-256 against `2a6a41cdfcbe78c1f94c27f244b17071896f60dc16d5cb3a75708d9cac85c3ff`.
+  - Zero plaintext code is stored anywhere in the codebase.
+- **Wrong Attempts & Staged Lockout**:
+  - Red flash, shake, and "ACCESS DENIED" feedback.
+  - After every 5 wrong attempts, the keypad locks with a progressive countdown: 60s, 120s, 180s, capped at 300s. Persisted in `sessionStorage` so refreshing cannot bypass it.
+- **Intercepted Transmissions (Staged Hints)**:
+  - Pinned rule: `"THE VAULT IGNORES WORDS. IT LISTENS TO WHAT REMAINS WHEN THE LETTERS ARE GONE."`
+  - 5 staged hint lines unlocking every 90 seconds spent on the Vault screen OR after every 2 wrong attempts.
+  - Newly unlocked hints type out with a typewriter effect. Includes countdown timer to next transmission.
+- **Vault Opening Sequence**:
+  - On correct code: rings accelerate, bolts retract, split doors slide open, golden light flare radiates outward, "VAULT OPENED" banner displays, timer stops, and transitions smoothly to the Case Closed screen after ~4s.
+
+### 7. Finish Screen (`CASE CLOSED`)
 - Fullscreen, hacker theme displaying:
   - **"CASE CLOSED. YOU FOUND THE REAL SIGNAL."**
-  - Total time taken (from first click of "Begin Investigation" to correct Round 3 submission).
+  - Total time taken (from first click of "Begin Investigation" to vault opening).
   - Round 2 attempts used (out of 3).
   - Round 3 submissions count.
+  - Vault attempts used.
+  - Hints unlocked count ($n / 5$).
   - Collected sponsor Instagram handles.
   - Clear banner: `"Show this screen to an organizer."`
   - No forward or back buttons or links.
@@ -82,15 +104,19 @@ A single-page, fully static, zero-backend cybersecurity competition / CTF challe
   - Validated securely via SHA-256 hash `db92f80fc751eebc031eec7d915b7b7d25bc26c3d4831669dec5dc165838cef0`.
   - Displays **zero answers** to any challenge.
 - **Organizer Capabilities**:
-  1. **Reset Attempts**: Restores Round 2 attempts to 3.
+  1. **Reset R2 Attempts**: Restores Round 2 attempts to 3.
   2. **Reset Entire Round 2**: Re-locks, clears folders, and reshuffles.
   3. **Skip Sponsor Checkpoint**: Bypasses the sponsor gate.
   4. **Reset Checkpoint**: Forces teams to re-verify.
   5. **Force-Unlock Round 3**: Marks preceding rounds complete and unlocks the AI Challenge.
-  6. **Force-Complete**: Jumps straight to the Case Closed finish screen using the current timer.
-  7. **Reset Everything**: Clears session & local storage and reloads to boot.
-  8. **Collected Handles Table**: View collected handles with a one-click **"Copy as CSV"** button.
-  9. **Stage Navigator**: Jump directly to `00: BOOT`, `01: RECON`, `CHECKPOINT`, `02: MAILBOX`, `03: AI ROUND`, or `04: FINISH`.
+  6. **Force-Unlock Vault**: Plays full vault opening animation sequence and proceeds to finish screen.
+  7. **Reset Vault Attempts & Lockout**: Clears vault attempts and active lockout.
+  8. **Reveal Next Transmission Hint**: Immediately reveals the next staged hint.
+  9. **Reset Vault State**: Resets entire vault progress, hints, and attempts.
+  10. **Force-Complete**: Jumps straight to the Case Closed finish screen using the current timer.
+  11. **Reset Everything**: Clears session & local storage and reloads to boot.
+  12. **Collected Handles Table**: View collected handles with a one-click **"Copy as CSV"** button.
+  13. **Stage Navigator**: Jump directly to `00: BOOT`, `01: RECON`, `CHECKPOINT`, `02: MAILBOX`, `03: AI ROUND`, `04: VAULT`, or `05: FINISH`.
 
 ### How to Change the Organizer Passphrase:
 1. Generate the SHA-256 hash of your custom passphrase in terminal:

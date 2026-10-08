@@ -48,6 +48,10 @@
       <div class="tracker-step" data-step="4" title="Round 3: AI Challenge">
         <span class="step-num">03</span><span class="step-label">AI SUMMARY</span>
       </div>
+      <div class="tracker-divider">/</div>
+      <div class="tracker-step" data-step="5" title="Round 4: The Vault">
+        <span class="step-num">04</span><span class="step-label">THE VAULT</span>
+      </div>
     </nav>
 
     <div class="header-right">
@@ -222,7 +226,7 @@
 
           <form id="round1Form" class="mission-form" autocomplete="off" onsubmit="return false;">
             <div class="mission-field">
-              <label for="round1PasswordInput" class="mission-label">ENTER ROUND 1 PASSWORD</label>
+              <label for="round1PasswordInput" class="mission-label">Enter the recovered password</label>
               <div class="mission-input-row">
                 <input 
                   type="password" 
@@ -746,6 +750,25 @@
                 </button>
               </form>
               <div class="phrase-feedback" id="phraseFeedback"></div>
+
+              <!-- Round 3 Success Reveal Card (Revealed upon phrase verification) -->
+              <div class="case-id-reveal-card hidden" id="r3SuccessRevealCard" style="margin-top: 16px;">
+                <div class="reveal-header">
+                  <span class="pulse-dot green"></span>
+                  <span class="reveal-title text-green glitch-text" id="r3SuccessGlitchTitle" data-text="KEY III RECOVERED">KEY III RECOVERED</span>
+                </div>
+                <div class="reveal-body">
+                  <div class="terminal-typewriter-text" id="typewriterR3Key">PHRASE AUTHENTICATED // KEY III RECORDED IN EVIDENCE LOCKER</div>
+                </div>
+                <div class="reveal-footer">
+                  <button class="cyber-button primary-btn" id="proceedToVaultBtn" type="button">
+                    <span class="btn-bracket">[</span>
+                    <span class="btn-text">PROCEED TO THE VAULT &gt;&gt;</span>
+                    <span class="btn-bracket">]</span>
+                    <span class="btn-glow"></span>
+                  </button>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -844,6 +867,321 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
 
     </div>
   </section>
+
+  <!-- ========================================================================= -->
+  <!-- SECTION 5: ROUND 4 — THE VAULT                                            -->
+  <!-- ========================================================================= -->
+  <section id="section-vault" class="view-section">
+    <div class="section-wrapper vault-round-layout">
+      
+      <!-- Section Header -->
+      <div class="section-heading-bar">
+        <div>
+          <div class="recon-brand-tag">FINAL SHOWDOWN // CLASSIFIED CORE</div>
+          <h2 class="glitch-text text-yellow" data-text="ROUND 4: THE VAULT">ROUND 4: THE VAULT</h2>
+          <div class="recon-subtitle">CENTRAL CIPHER VAULT // AIR-GAPPED STORAGE UNIT</div>
+        </div>
+        <div class="stamp-box vault-stamp-box">
+          <span class="stamp-text">RESTRICTED // AIR-GAP VAULT</span>
+          <span class="stamp-id" id="vaultHeaderStatus">LOCK MECHANISM ARMED</span>
+        </div>
+      </div>
+
+      <!-- EVIDENCE LOCKER (Every round stores what the team typed) -->
+      <div class="terminal-card evidence-locker-panel">
+        <div class="terminal-titlebar">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="terminal-title">evidence_locker_manifest.sys</div>
+          <div class="terminal-specs">RECOVERED KEY REPOSITORY</div>
+        </div>
+        <div class="evidence-locker-body">
+          <div class="evidence-locker-intro">
+            <span class="text-cyan font-bold">// EVIDENCE LOCKER:</span> Secure storage of forensic artifacts recovered across operational phases.
+          </div>
+          <div class="evidence-cards-grid">
+            <div class="evidence-card">
+              <div class="evidence-card-badge">KEY I</div>
+              <div class="evidence-card-label">RECONNAISSANCE PASSWORD</div>
+              <div class="evidence-card-value font-mono" id="evidenceKey1">KEY NOT RECOVERED</div>
+            </div>
+            <div class="evidence-card">
+              <div class="evidence-card-badge">KEY II</div>
+              <div class="evidence-card-label">VERIFICATION CODE</div>
+              <div class="evidence-card-value font-mono" id="evidenceKey2">KEY NOT RECOVERED</div>
+            </div>
+            <div class="evidence-card">
+              <div class="evidence-card-badge">KEY III</div>
+              <div class="evidence-card-label">EXTRACTED AI PHRASE</div>
+              <div class="evidence-card-value font-mono" id="evidenceKey3">KEY NOT RECOVERED</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Vault Chamber Grid: Vault Door & Keypad -->
+      <div class="vault-chamber-grid">
+        
+        <!-- Left / Center: Vault Door Mechanism -->
+        <div class="terminal-card vault-door-card">
+          <div class="terminal-titlebar">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">vault_door_aperture.svg [CHAMBER-04]</div>
+            <div class="terminal-specs" id="vaultApertureSpecs">TITANIUM ALLOY // 3-KEY ROTOR</div>
+          </div>
+          <div class="vault-door-viewport">
+            <!-- Background Gold Light Flare for Unlocking -->
+            <div class="vault-gold-flare" id="vaultGoldFlare"></div>
+
+            <!-- Vault Door Assembly SVG -->
+            <svg class="vault-rings-svg" id="vaultRingsSvg" viewBox="0 0 400 400" width="100%" height="100%">
+              <defs>
+                <radialGradient id="vaultRadialBg" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#141c16" />
+                  <stop offset="85%" stop-color="#0a0e0b" />
+                  <stop offset="100%" stop-color="#040605" />
+                </radialGradient>
+                <radialGradient id="goldCoreGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#fff2a1" stop-opacity="1" />
+                  <stop offset="45%" stop-color="#ffd700" stop-opacity="0.85" />
+                  <stop offset="80%" stop-color="#ff9900" stop-opacity="0.4" />
+                  <stop offset="100%" stop-color="#ff7700" stop-opacity="0" />
+                </radialGradient>
+                <filter id="cyanGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+                <filter id="goldGlowFilter" x="-40%" y="-40%" width="180%" height="180%">
+                  <feGaussianBlur stdDeviation="6" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              <!-- Outer Frame & Hub -->
+              <circle cx="200" cy="200" r="192" fill="url(#vaultRadialBg)" stroke="#1a2e20" stroke-width="6" />
+              <circle cx="200" cy="200" r="186" fill="none" stroke="#39ff14" stroke-opacity="0.25" stroke-dasharray="4 6" stroke-width="2" />
+
+              <!-- Perimeter Radial Bolts (Retract inward or scale on open) -->
+              <g id="vaultBoltsGroup">
+                <!-- 8 Radial Heavy Bolts -->
+                <rect x="194" y="8" width="12" height="24" rx="3" fill="#39ff14" opacity="0.8" />
+                <rect x="194" y="368" width="12" height="24" rx="3" fill="#39ff14" opacity="0.8" />
+                <rect x="8" y="194" width="24" height="12" rx="3" fill="#39ff14" opacity="0.8" />
+                <rect x="368" y="194" width="24" height="12" rx="3" fill="#39ff14" opacity="0.8" />
+                <rect x="62" y="62" width="16" height="16" rx="3" fill="#00e5ff" opacity="0.8" transform="rotate(45 70 70)" />
+                <rect x="314" y="62" width="16" height="16" rx="3" fill="#00e5ff" opacity="0.8" transform="rotate(45 322 70)" />
+                <rect x="62" y="314" width="16" height="16" rx="3" fill="#00e5ff" opacity="0.8" transform="rotate(45 70 322)" />
+                <rect x="314" y="314" width="16" height="16" rx="3" fill="#00e5ff" opacity="0.8" transform="rotate(45 322 322)" />
+              </g>
+
+              <!-- Central Gold Emitter (behind split doors) -->
+              <circle id="vaultCoreGold" cx="200" cy="200" r="110" fill="url(#goldCoreGlow)" opacity="0" filter="url(#goldGlowFilter)" />
+
+              <!-- Outer Rotating Gear / Dial Ring -->
+              <g id="vaultOuterRing">
+                <circle cx="200" cy="200" r="162" fill="none" stroke="#00e5ff" stroke-width="3" stroke-opacity="0.6" stroke-dasharray="16 8 4 8" />
+                <circle cx="200" cy="200" r="152" fill="none" stroke="#39ff14" stroke-width="1.5" stroke-opacity="0.4" stroke-dasharray="2 6" />
+                <!-- Gear notches -->
+                <path d="M 196 38 L 204 38 L 202 46 L 198 46 Z" fill="#00e5ff" />
+                <path d="M 196 354 L 204 354 L 202 362 L 198 362 Z" fill="#00e5ff" />
+                <path d="M 38 196 L 38 204 L 46 202 L 46 198 Z" fill="#00e5ff" />
+                <path d="M 354 196 L 354 204 L 362 202 L 362 198 Z" fill="#00e5ff" />
+              </g>
+
+              <!-- Middle Counter-Rotating Dial Ring -->
+              <g id="vaultMiddleRing">
+                <circle cx="200" cy="200" r="130" fill="none" stroke="#ffd700" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="10 14 30 14" />
+                <circle cx="200" cy="200" r="120" fill="none" stroke="#00e5ff" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="4 8" />
+                <!-- Dial tick markers -->
+                <circle cx="200" cy="74" r="3" fill="#ffd700" />
+                <circle cx="200" cy="326" r="3" fill="#ffd700" />
+                <circle cx="74" cy="200" r="3" fill="#ffd700" />
+                <circle cx="326" cy="200" r="3" fill="#ffd700" />
+              </g>
+
+              <!-- Split Blast Doors (slide left and right on unlock) -->
+              <g id="vaultDoorLeft">
+                <path d="M 200 80 A 120 120 0 0 0 200 320 L 198 320 L 198 80 Z" fill="#101813" stroke="#39ff14" stroke-width="2" stroke-opacity="0.6" />
+                <line x1="160" y1="120" x2="160" y2="280" stroke="#1f3b25" stroke-width="4" />
+                <line x1="130" y1="150" x2="130" y2="250" stroke="#1f3b25" stroke-width="3" />
+              </g>
+              <g id="vaultDoorRight">
+                <path d="M 200 80 A 120 120 0 0 1 200 320 L 202 320 L 202 80 Z" fill="#101813" stroke="#39ff14" stroke-width="2" stroke-opacity="0.6" />
+                <line x1="240" y1="120" x2="240" y2="280" stroke="#1f3b25" stroke-width="4" />
+                <line x1="270" y1="150" x2="270" y2="250" stroke="#1f3b25" stroke-width="3" />
+              </g>
+
+              <!-- Inner Fast Rotating Core Ring -->
+              <g id="vaultInnerRing">
+                <circle cx="200" cy="200" r="95" fill="none" stroke="#39ff14" stroke-width="2" stroke-opacity="0.8" stroke-dasharray="8 6 18 6" />
+                <circle cx="200" cy="200" r="82" fill="none" stroke="#00e5ff" stroke-width="1.5" stroke-opacity="0.5" stroke-dasharray="5 5" />
+              </g>
+
+              <!-- Central Vault Hub Faceplate -->
+              <circle cx="200" cy="200" r="68" fill="#0d140f" stroke="#00e5ff" stroke-width="3" />
+              <circle cx="200" cy="200" r="64" fill="none" stroke="#ffd700" stroke-width="1" stroke-opacity="0.5" stroke-dasharray="3 3" />
+
+              <!-- Three Small Keyholes Labelled I, II, III -->
+              <g id="vaultKeyholes">
+                <!-- Keyhole I (Top) -->
+                <g transform="translate(200, 160)">
+                  <circle cx="0" cy="0" r="8" fill="#050806" stroke="#ffd700" stroke-width="1.5" />
+                  <path d="M -2 0 L 2 0 L 3 6 L -3 6 Z" fill="#ffd700" />
+                  <text x="0" y="-11" fill="#ffd700" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800" text-anchor="middle">I</text>
+                </g>
+                <!-- Keyhole II (Bottom Left) -->
+                <g transform="translate(168, 222)">
+                  <circle cx="0" cy="0" r="8" fill="#050806" stroke="#ffd700" stroke-width="1.5" />
+                  <path d="M -2 0 L 2 0 L 3 6 L -3 6 Z" fill="#ffd700" />
+                  <text x="-12" y="4" fill="#ffd700" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800" text-anchor="middle">II</text>
+                </g>
+                <!-- Keyhole III (Bottom Right) -->
+                <g transform="translate(232, 222)">
+                  <circle cx="0" cy="0" r="8" fill="#050806" stroke="#ffd700" stroke-width="1.5" />
+                  <path d="M -2 0 L 2 0 L 3 6 L -3 6 Z" fill="#ffd700" />
+                  <text x="14" y="4" fill="#ffd700" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="800" text-anchor="middle">III</text>
+                </g>
+              </g>
+
+              <!-- Central Cyber Emblem -->
+              <circle cx="200" cy="195" r="10" fill="#050a06" stroke="#39ff14" stroke-width="1.5" />
+              <polygon points="200,189 205,198 195,198" fill="#39ff14" />
+            </svg>
+
+            <!-- Vault Opened Celebration Overlay -->
+            <div class="vault-opened-banner hidden" id="vaultOpenedBanner">
+              <div class="opened-badge">UNLOCKED</div>
+              <h2 class="glitch-text text-yellow" data-text="VAULT OPENED">VAULT OPENED</h2>
+              <div class="opened-subtext text-green font-mono">AUTHENTICATION ACCEPTED // ARCHIVE UNLOCKED</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right / Keypad & Code Display Card -->
+        <div class="terminal-card vault-keypad-card" id="vaultKeypadCard">
+          <div class="terminal-titlebar">
+            <div class="terminal-dots">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-title">master_cipher_keypad.ctl</div>
+            <div class="terminal-specs">4-DIGIT PIN</div>
+          </div>
+          <div class="vault-keypad-body">
+            
+            <div class="keypad-instruction">
+              <span class="text-cyan font-bold">// KEYPAD INTERFACE:</span> Enter the 4-digit authorization code to trigger vault release.
+            </div>
+
+            <!-- 4-Slot Display -->
+            <div class="vault-slots-container" id="vaultSlotsContainer">
+              <div class="vault-slot active" id="vaultSlot0"><span class="slot-char">_</span></div>
+              <div class="vault-slot" id="vaultSlot1"><span class="slot-char">_</span></div>
+              <div class="vault-slot" id="vaultSlot2"><span class="slot-char">_</span></div>
+              <div class="vault-slot" id="vaultSlot3"><span class="slot-char">_</span></div>
+            </div>
+
+            <!-- Status & Feedback Area -->
+            <div class="vault-status-box" id="vaultStatusBox">
+              <div class="vault-status-text text-dim" id="vaultStatusMsg">AWAITING 4-DIGIT AUTHORIZATION CODE</div>
+            </div>
+
+            <!-- Lockout Countdown Banner (Hidden until lockout triggered) -->
+            <div class="vault-lockout-banner hidden" id="vaultLockoutBanner">
+              <div class="lockout-badge text-red">🚨 SECURITY LOCKOUT</div>
+              <div class="lockout-timer text-yellow font-mono" id="vaultLockoutTimer">COOLDOWN: 01:00</div>
+              <div class="lockout-note text-dim">Keypad temporarily disabled due to consecutive invalid attempts.</div>
+            </div>
+
+            <!-- 3x4 On-Screen Numeric Keypad -->
+            <div class="vault-keypad-grid" id="vaultKeypadGrid">
+              <button type="button" class="keypad-btn" data-key="1">1</button>
+              <button type="button" class="keypad-btn" data-key="2">2</button>
+              <button type="button" class="keypad-btn" data-key="3">3</button>
+              <button type="button" class="keypad-btn" data-key="4">4</button>
+              <button type="button" class="keypad-btn" data-key="5">5</button>
+              <button type="button" class="keypad-btn" data-key="6">6</button>
+              <button type="button" class="keypad-btn" data-key="7">7</button>
+              <button type="button" class="keypad-btn" data-key="8">8</button>
+              <button type="button" class="keypad-btn" data-key="9">9</button>
+              <button type="button" class="keypad-btn action-key backspace-key" data-key="backspace" title="Backspace / Clear">⌫</button>
+              <button type="button" class="keypad-btn" data-key="0">0</button>
+              <button type="button" class="keypad-btn action-key enter-key" data-key="enter" title="Submit Code">ENTER</button>
+            </div>
+
+            <div class="keypad-hint-text text-dim">
+              Physical keyboard input supported (0-9, Backspace, Enter).
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- INTERCEPTED TRANSMISSIONS (Staged Hints) -->
+      <div class="terminal-card transmissions-card" id="transmissionsCard">
+        <div class="terminal-titlebar">
+          <div class="terminal-dots">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="terminal-title">// INTERCEPTED TRANSMISSIONS [SIGINT DECRYPTION LOG]</div>
+          <div class="terminal-specs transmissions-specs">
+            <span class="intel-badge" id="vaultIntelBadge">INTEL 0/5 UNLOCKED</span>
+            <span class="teaser-countdown" id="vaultCountdownTeaser">NEXT TRANSMISSION IN 01:30</span>
+          </div>
+        </div>
+        <div class="transmissions-body">
+          <!-- Always visible pinned line -->
+          <div class="transmission-pinned">
+            <span class="pinned-tag text-cyan font-bold">[PRIORITY CIPHER INTERCEPT]</span>
+            <p class="pinned-text font-mono text-green">
+              "THE VAULT IGNORES WORDS. IT LISTENS TO WHAT REMAINS WHEN THE LETTERS ARE GONE."
+            </p>
+          </div>
+
+          <div class="transmissions-log-list" id="transmissionsLogList">
+            <!-- Hint 1 -->
+            <div class="transmission-item locked" id="hintItem1" data-hint-idx="1">
+              <span class="trans-num font-mono">01:</span>
+              <span class="trans-content font-mono" id="hintContent1">[ENCRYPTED TRANSMISSION - AWAITING DECRYPTION]</span>
+            </div>
+            <!-- Hint 2 -->
+            <div class="transmission-item locked" id="hintItem2" data-hint-idx="2">
+              <span class="trans-num font-mono">02:</span>
+              <span class="trans-content font-mono" id="hintContent2">[ENCRYPTED TRANSMISSION - AWAITING DECRYPTION]</span>
+            </div>
+            <!-- Hint 3 -->
+            <div class="transmission-item locked" id="hintItem3" data-hint-idx="3">
+              <span class="trans-num font-mono">03:</span>
+              <span class="trans-content font-mono" id="hintContent3">[ENCRYPTED TRANSMISSION - AWAITING DECRYPTION]</span>
+            </div>
+            <!-- Hint 4 -->
+            <div class="transmission-item locked" id="hintItem4" data-hint-idx="4">
+              <span class="trans-num font-mono">04:</span>
+              <span class="trans-content font-mono" id="hintContent4">[ENCRYPTED TRANSMISSION - AWAITING DECRYPTION]</span>
+            </div>
+            <!-- Hint 5 -->
+            <div class="transmission-item locked" id="hintItem5" data-hint-idx="5">
+              <span class="trans-num font-mono">05:</span>
+              <span class="trans-content font-mono" id="hintContent5">[ENCRYPTED TRANSMISSION - AWAITING DECRYPTION]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
 <!-- ========================================================================= -->
   <!-- FULLSCREEN FINISH / CASE CLOSED SCREEN                                    -->
   <!-- ========================================================================= -->
@@ -867,6 +1205,14 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
         <div class="stat-card">
           <span class="stat-title">ROUND 3 SUBMISSIONS</span>
           <span class="stat-val text-green" id="finishR3Submissions">1</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">VAULT ATTEMPTS USED</span>
+          <span class="stat-val text-yellow" id="finishVaultAttempts">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">HINTS UNLOCKED</span>
+          <span class="stat-val text-cyan" id="finishHintsUnlocked">0 / 5</span>
         </div>
         <div class="stat-card">
           <span class="stat-title">INVESTIGATION STATUS</span>
@@ -914,11 +1260,15 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
           <div class="admin-status-text text-green">✓ OVERRIDE AUTHORIZED // ROOT PRIVILEGES</div>
 
           <div class="admin-actions-grid">
-            <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET ATTEMPTS (TO 3)</button>
+            <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET R2 ATTEMPTS (TO 3)</button>
             <button class="cyber-button sm" id="adminResetR2Btn">RESET ENTIRE ROUND 2</button>
             <button class="cyber-button sm" id="adminSkipCheckpointBtn">⚡ SKIP SPONSOR CHECKPOINT</button>
             <button class="cyber-button sm" id="adminResetCheckpointBtn">↺ RESET CHECKPOINT</button>
             <button class="cyber-button primary-btn sm" id="adminForceUnlockR3Btn">FORCE-UNLOCK ROUND 3</button>
+            <button class="cyber-button primary-btn sm" id="adminForceUnlockVaultBtn">FORCE-UNLOCK VAULT (ANIMATION)</button>
+            <button class="cyber-button sm" id="adminResetVaultAttemptsBtn">RESET VAULT ATTEMPTS &amp; LOCKOUT</button>
+            <button class="cyber-button sm" id="adminRevealNextHintBtn">REVEAL NEXT TRANSMISSION HINT</button>
+            <button class="cyber-button sm" id="adminResetVaultBtn">RESET VAULT STATE</button>
             <button class="cyber-button primary-btn sm" id="adminForceCompleteBtn">FORCE-COMPLETE (FINISH SCREEN)</button>
             <button class="cyber-button text-red sm" id="adminResetEverythingBtn">⚠️ RESET EVERYTHING</button>
             <button class="cyber-button sm" id="adminReplayCutscene1Btn">🎬 REPLAY CUTSCENE 1</button>
@@ -957,7 +1307,8 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
               <button class="cyber-button sm" data-jump="checkpoint">CHECKPOINT</button>
               <button class="cyber-button sm" data-jump="3">02: MAILBOX</button>
               <button class="cyber-button sm" data-jump="4">03: AI ROUND</button>
-              <button class="cyber-button sm" data-jump="finish">04: FINISH</button>
+              <button class="cyber-button sm" data-jump="5">04: VAULT</button>
+              <button class="cyber-button sm" data-jump="finish">FINISH</button>
             </div>
           </div>
         </div>
