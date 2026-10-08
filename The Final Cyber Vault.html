@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Final Cyber Vault</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--g:#00ff66;--bg:#000}
+html,body{height:100%;margin:0;background:#000;color:var(--g);font-family:"Courier New",ui-monospace,monospace;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;opacity:.55}
+.vig{position:fixed;inset:0;background:radial-gradient(ellipse at center,rgba(0,20,8,.55) 0%,rgba(0,0,0,.92) 85%);pointer-events:none}
+.scan{position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 1px,transparent 1px 3px);pointer-events:none}
+#stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+#text{max-width:900px;font-size:clamp(18px,3.2vw,34px);line-height:1.5;text-shadow:0 0 8px var(--g),0 0 22px rgba(0,255,102,.5);white-space:pre-wrap;min-height:8em;display:flex;flex-direction:column;justify-content:center}
+#text .big{font-size:1.45em;font-weight:bold;letter-spacing:.04em}
+#text .cur::after{content:"█";animation:b 1s steps(1) infinite;margin-left:2px}
+@keyframes b{50%{opacity:0}}
+#text.glitch{animation:gl .35s}
+@keyframes gl{0%{transform:translate(0)}20%{transform:translate(-4px,2px);filter:hue-rotate(40deg)}40%{transform:translate(4px,-2px)}60%{transform:translate(-2px,0);opacity:.6}100%{transform:none}}
+#bar{position:fixed;left:0;bottom:0;height:3px;background:var(--g);box-shadow:0 0 10px var(--g);width:0}
+#tag{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:16px;font-size:12px;opacity:.7;letter-spacing:.2em}
+#ui{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(0,0,0,.8);z-index:5}
+button{background:transparent;color:var(--g);border:1px solid var(--g);padding:12px 28px;font:inherit;font-size:18px;letter-spacing:.15em;cursor:pointer;box-shadow:0 0 12px rgba(0,255,102,.5)}
+button:hover{background:rgba(0,255,102,.15)}
+label{font-size:14px;opacity:.85;cursor:pointer}
+.dash{display:none;width:min(900px,92vw);border:1px solid var(--g);padding:18px;box-shadow:0 0 25px rgba(0,255,102,.4);background:rgba(0,20,8,.75);text-align:left;font-size:clamp(12px,2vw,18px)}
+.dash h3{margin:0 0 10px;letter-spacing:.2em}
+.row{display:flex;gap:10px;margin:10px 0;flex-wrap:wrap}
+.frag{flex:1;min-width:120px;border:1px dashed var(--g);padding:12px;text-align:center}
+.frag b{display:block;font-size:1.6em}
+</style></head><body>
+<canvas id="c"></canvas><div class="vig"></div><div class="scan"></div>
+<div id="tag">// FINAL_VAULT.SYS</div>
+<div id="stage"><div id="text"></div>
+<div class="dash" id="dash"><h3>&gt; INVESTIGATION DASHBOARD</h3>
+<div>STATUS: <span id="st">VAULT LOCKED</span></div>
+<div class="row"><div class="frag">LAYER 1<b>[ ? ]</b>LOCKED</div><div class="frag">LAYER 2<b>[ ? ]</b>LOCKED</div><div class="frag">LAYER 3<b>[ ? ]</b>LOCKED</div></div>
+<div>&gt; ASSEMBLE KEY FRAGMENTS_<span style="animation:b 1s steps(1) infinite">█</span></div></div></div>
+<div id="bar"></div>
+<div id="ui"><div style="font-size:clamp(20px,4vw,38px);text-shadow:0 0 12px var(--g)">THE FINAL CYBER VAULT</div>
+<button id="go">▶ PLAY</button><label><input type="checkbox" id="vo"> Enable ghost voice + eerie ambience</label></div>
+<script>
+// Matrix rain
+var cv=document.getElementById('c'),cx=cv.getContext('2d'),cols,drops;
+function size(){cv.width=innerWidth;cv.height=innerHeight;cols=Math.floor(cv.width/16);drops=Array(cols).fill(0).map(function(){return Math.random()*-50})}
+size();addEventListener('resize',size);
+var chars="01アイウエオカキクケコ{}<>/\\$#%ABCDEF0123456789";
+setInterval(function(){cx.fillStyle="rgba(0,0,0,.08)";cx.fillRect(0,0,cv.width,cv.height);cx.fillStyle="#00ff66";cx.font="15px monospace";
+for(var i=0;i<cols;i++){cx.fillText(chars[Math.floor(Math.random()*chars.length)],i*16,drops[i]*16);
+if(drops[i]*16>cv.height&&Math.random()>.975)drops[i]=0;drops[i]++}},45);
+
+// Script scenes: [lines, holdMs, optional big-line index]
+var S=[
+[["Welcome to my world, investigators."],1800],
+[["I watched you follow my trail","across your own campus."],2200],
+[["You found the signals I left behind.","You uncovered the locations.","You trusted your instincts."],2400],
+[["But you've made one mistake."],2200,0],
+[["You think this investigation","is about finding me."],1800],
+[["It isn't."],2200,0],
+[["While you were searching for clues,","I was studying you."],2200],
+[["And now I know exactly","what you're capable of."],2400],
+[["Behind this screen is my final cyber vault.","It contains everything you need","to uncover what happened."],2600],
+[["But the vault has three security layers."],1800],
+[["Three vulnerabilities."],1500,0],
+[["Three fragments of a single access key."],2200],
+[["You will have to think like an investigator,","recognize deception and question","the information placed in front of you."],2800],
+[["Because the greatest weakness","in any security system..."],2200],
+[["...is the person who trusts it blindly."],2800,0],
+[["Your final investigation begins now."],2600,0]
+];
+var T=document.getElementById('text'),bar=document.getElementById('bar'),sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+var voice=false;
+var ghostV=null;
+function pickVoice(){var v=speechSynthesis.getVoices().filter(function(x){return /^en/i.test(x.lang)});
+ ghostV=v.find(function(x){return /male|daniel|alex|fred|david|george|james|ralph|bad news/i.test(x.name)&&!/female/i.test(x.name)})||v[0]||null}
+if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function say(t){return new Promise(function(res){
+ if(!voice||!window.speechSynthesis){res();return}
+ var u=new SpeechSynthesisUtterance(t);if(ghostV)u.voice=ghostV;
+ u.rate=.62;u.pitch=.05;u.volume=1;
+ var done=false,f=function(){if(!done){done=true;res()}};
+ u.onend=f;u.onerror=f;setTimeout(f,15000);speechSynthesis.speak(u)})}
+// Ghostly ambient drone + whispery noise
+var AC=null,droneGain=null;
+function startDrone(){try{AC=new (window.AudioContext||window.webkitAudioContext)();
+ var m=AC.createGain();m.gain.value=0;m.connect(AC.destination);droneGain=m;
+ var lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=380;lp.connect(m);
+ [55,55.7,82.4,110.5].forEach(function(f,i){var o=AC.createOscillator();o.type=i%2?'sawtooth':'sine';o.frequency.value=f;
+  var g=AC.createGain();g.gain.value=i<2?.5:.18;o.connect(g);g.connect(lp);o.start()});
+ var lfo=AC.createOscillator(),lg=AC.createGain();lfo.frequency.value=.15;lg.gain.value=120;lfo.connect(lg);lg.connect(lp.frequency);lfo.start();
+ var nb=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate),d=nb.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+ var ns=AC.createBufferSource();ns.buffer=nb;ns.loop=true;var bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2200;bp.Q.value=.8;
+ var ng=AC.createGain();ng.gain.value=.012;ns.connect(bp);bp.connect(ng);ng.connect(m);ns.start();
+ m.gain.linearRampToValueAtTime(.16,AC.currentTime+3)}catch(e){}}
+function stopDrone(){try{droneGain.gain.linearRampToValueAtTime(0,AC.currentTime+3)}catch(e){}}
+async function type(el,txt,big){el.className=big?'big cur':'cur';for(var i=0;i<=txt.length;i++){el.textContent=txt.slice(0,i);await sleep(42)}el.className=big?'big':''}
+async function run(){
+ document.getElementById('dash').style.display='none';T.style.display='flex';
+ var total=S.length;
+ for(var s=0;s<total;s++){
+  bar.style.width=(s/total*100)+'%';T.innerHTML='';
+  var sc=S[s];var sp=say(sc[0].join(' '));
+  for(var l=0;l<sc[0].length;l++){var d=document.createElement('div');T.appendChild(d);await type(d,sc[0][l],sc[2]===l)}
+  await sp;await sleep(voice?700:sc[1]);
+  T.classList.add('glitch');await sleep(350);T.classList.remove('glitch');
+ }
+ bar.style.width='100%';T.innerHTML='';stopDrone();
+ // Projector change
+ var d=document.createElement('div');T.appendChild(d);d.style.opacity=.7;await type(d,"[ The projector changes to the main investigation dashboard ]",false);
+ await sleep(1500);T.style.display='none';
+ var dash=document.getElementById('dash');dash.style.display='block';
+ document.getElementById('ui').style.display='flex';
+ document.querySelector('#ui div').textContent='END OF TRANSMISSION';
+ document.getElementById('go').textContent='↻ REPLAY';
+ document.getElementById('ui').style.background='transparent';
+ document.getElementById('ui').style.justifyContent='flex-end';
+ document.getElementById('ui').style.paddingBottom='24px';
+}
+document.getElementById('go').onclick=function(){
+ voice=document.getElementById('vo').checked;if(voice)startDrone();
+ document.getElementById('ui').style.display='none';
+ document.getElementById('ui').style.cssText='';
+ document.getElementById('ui').style.display='none';
+ run();
+};
+</script></body></html>
