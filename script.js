@@ -2491,21 +2491,6 @@
     document.getElementById('viewTimestamp').textContent = timeStr + ' (UTC)';
     document.getElementById('viewBody').textContent = email.body;
 
-    // Simulated SPF/DKIM flags
-    const spfBadge = document.getElementById('viewSpfBadge');
-    const dkimBadge = document.getElementById('viewDkimBadge');
-    if (email.sender_email.endsWith('@microsoft.com')) {
-      spfBadge.textContent = 'SPF: PASS';
-      spfBadge.className = 'sec-badge spf-badge text-green';
-      dkimBadge.textContent = 'DKIM: SIGNED';
-      dkimBadge.className = 'sec-badge dkim-badge text-green';
-    } else {
-      spfBadge.textContent = 'SPF: FAIL / SUSPECT';
-      spfBadge.className = 'sec-badge spf-badge text-red';
-      dkimBadge.textContent = 'DKIM: UNTRUSTED DOMAIN';
-      dkimBadge.className = 'sec-badge dkim-badge text-red';
-    }
-
     // Sync toolbar buttons for current folder
     const curF = getEmailFolder(email.id);
     updateReaderToolbar(curF);
