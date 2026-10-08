@@ -17,7 +17,6 @@
   <!-- Stylesheets -->
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="cutscene.css">
-  <link rel="stylesheet" href="timeline-round.css">
 </head>
 <body>
 
@@ -46,16 +45,8 @@
         <span class="step-num">02</span><span class="step-label">MAILBOX</span>
       </div>
       <div class="tracker-divider">/</div>
-      <div class="tracker-step" data-step="timeline" title="Round 3: Breach Timeline">
-        <span class="step-num">03</span><span class="step-label">TIMELINE</span>
-      </div>
-      <div class="tracker-divider">/</div>
-      <div class="tracker-step" data-step="4" title="Round 4: Vault Terminal">
-        <span class="step-num">04</span><span class="step-label">TERMINAL</span>
-      </div>
-      <div class="tracker-divider">/</div>
-      <div class="tracker-step" data-step="5" title="Round 5: AI Override">
-        <span class="step-num">05</span><span class="step-label">AI OVERRIDE</span>
+      <div class="tracker-step" data-step="4" title="Round 3: AI Challenge">
+        <span class="step-num">03</span><span class="step-label">AI SUMMARY</span>
       </div>
     </nav>
 
@@ -651,7 +642,7 @@
             <div class="reveal-footer">
               <button class="cyber-button primary-btn" id="proceedToRound3Btn">
                 <span class="btn-bracket">[</span>
-                <span class="btn-text">PROCEED TO NEXT ROUND: BREACH TIMELINE >></span>
+                <span class="btn-text">PROCEED TO ROUND 3: AI CHALLENGE >></span>
                 <span class="btn-bracket">]</span>
                 <span class="btn-glow"></span>
               </button>
@@ -690,387 +681,18 @@
     </div>
   </section>
 
-  <!-- ========================================================================= -->
-  <!-- SECTION: BREACH TIMELINE (LOG ANALYSIS)                                   -->
-  <!-- ========================================================================= -->
-  <section id="section-timeline" class="view-section">
-    <div class="section-wrapper timeline-layout">
-      
-      <!-- Section Header -->
-      <div class="section-heading-bar">
-        <div>
-          <span class="sub-badge cyan-border">PHASE 02.5 // FORENSIC LOG AUDIT</span>
-          <h2 class="glitch-text" id="timelineRoundTitle" data-text="ROUND 3: BREACH TIMELINE">ROUND 3: BREACH TIMELINE</h2>
-        </div>
-        <div class="stamp-box">
-          <span class="stamp-text">INCIDENT: NOVATECH</span>
-          <span class="stamp-id">CASE-LOG: #03-OCT</span>
-        </div>
-      </div>
-
-      <!-- Short Intro Text -->
-      <div class="timeline-intro-card">
-        <span class="timeline-intro-icon">🕵️</span>
-        <div class="timeline-intro-text">
-          NovaTech Solutions was hacked on Friday, 3 Oct. Study the evidence. Find the exact time the attacker first got in.
-        </div>
-      </div>
-
-      <!-- Main Grid: Left Evidence Workspace | Right Answer Verification -->
-      <div class="timeline-main-grid">
-
-        <!-- Column 1: Evidence Workspace (Tabs) -->
-        <div class="timeline-evidence-card">
-          <div class="terminal-titlebar">
-            <div class="terminal-dots">
-              <span class="dot red"></span>
-              <span class="dot yellow"></span>
-              <span class="dot green"></span>
-            </div>
-            <div class="terminal-title">evidence_spool://novatech-solutions/forensics</div>
-            <div class="terminal-specs">READ-ONLY // EVIDENCE SEALED</div>
-          </div>
-
-          <!-- Evidence Navigation Tabs -->
-          <div class="timeline-tabs-bar">
-            <button type="button" class="timeline-tab-btn active" id="tabBtnDoor">
-              <span>🏢 Door Badge Log</span>
-              <span class="tab-badge">ACCESS CTRL</span>
-            </button>
-            <button type="button" class="timeline-tab-btn" id="tabBtnLogin">
-              <span>💻 Login Log</span>
-              <span class="tab-badge">AUTH SPOOL</span>
-            </button>
-            <button type="button" class="timeline-tab-btn" id="tabBtnNotice">
-              <span>📋 Notice Board</span>
-              <span class="tab-badge">BULLETIN</span>
-            </button>
-          </div>
-
-          <!-- Tab Panes -->
-          <div class="timeline-panes-wrapper timeline-evidence-content">
-            
-            <!-- Pane 1: Door Badge Log (Active by default) -->
-            <div class="timeline-pane active" id="paneDoorLog">
-              <div class="timeline-table-wrapper">
-                <table class="timeline-table" aria-label="Door Badge Log">
-                  <thead>
-                    <tr>
-                      <th style="width: 140px;">TIMESTAMP</th>
-                      <th>PERSONNEL / ROLE</th>
-                      <th>EVENT TYPE</th>
-                    </tr>
-                  </thead>
-                  <tbody id="timelineDoorTableBody">
-                    <!-- Populated dynamically from timeline-data.js -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Pane 2: Login Log (Hidden until clicked) -->
-            <div class="timeline-pane" id="paneLoginLog">
-              <div class="timeline-table-wrapper">
-                <table class="timeline-table" aria-label="Login Log">
-                  <thead>
-                    <tr>
-                      <th style="width: 130px;">TIME</th>
-                      <th style="width: 160px;">USER</th>
-                      <th>EVENT</th>
-                      <th style="width: 170px;">DEVICE / ORIGIN</th>
-                    </tr>
-                  </thead>
-                  <tbody id="timelineLoginTableBody">
-                    <!-- Populated dynamically from timeline-data.js -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Pane 3: Notice Board (Hidden until clicked - strictly per instructions) -->
-            <div class="timeline-pane" id="paneNoticeBoard">
-              <div class="notice-board-container">
-                <div class="notice-board-banner">
-                  <span>📌</span>
-                  <span>INTERNAL BULLETIN BOARD // NOVATECH HEADQUARTERS — FRIDAY, 3 OCT</span>
-                </div>
-                <div class="notice-board-list" id="timelineNoticeBoardList">
-                  <!-- Populated dynamically from timeline-data.js -->
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Column 2: Answer Verification Panel -->
-        <aside class="timeline-verify-panel" id="timelineVerifyPanel">
-          <div class="timeline-verify-header">
-            <span class="sec-lock-icon">🔒</span> BREACH TIMESTAMP VERIFICATION
-          </div>
-
-          <!-- Attempts Left Pips -->
-          <div class="timeline-attempts-row">
-            <span class="attempts-label">ATTEMPTS LEFT:</span>
-            <div class="attempt-pips" id="timelineAttemptPips">
-              <span class="pip filled"></span>
-              <span class="pip filled"></span>
-              <span class="pip filled"></span>
-            </div>
-          </div>
-
-          <!-- Team Key Info Badge -->
-          <div class="timeline-key-info-badge" id="timelineTeamKeyBadge">
-            <span>TEAM: <strong>ALPHA</strong></span>
-            <span>KEY: <strong>3</strong></span>
-          </div>
-
-          <!-- Answer Form -->
-          <form id="timelineVerifyForm" class="sec-login-form" autocomplete="off">
-            <div class="timeline-input-group">
-              <label for="timelineTimeInput" class="timeline-label">BREACH TIME ENCRYPTED CODE</label>
-              <input type="text" id="timelineTimeInput" class="timeline-input" placeholder="HHMM" maxlength="4" autocomplete="off" spellcheck="false">
-              <div class="timeline-helper-text">
-                Enter the breach time as 4 digits in 24-hour format (HHMM). Then add your team key to every digit (wrap around after 9). Example: key 2 turns 0845 into 2067.
-              </div>
-            </div>
-            <button type="submit" id="timelineSubmitBtn" class="cyber-button primary-btn w-full">
-              <span class="btn-bracket">[</span>
-              <span class="btn-text">SUBMIT TIMESTAMP >></span>
-              <span class="btn-bracket">]</span>
-              <span class="btn-glow"></span>
-            </button>
-          </form>
-
-          <div id="timelineFeedback" class="sec-feedback" aria-live="polite"></div>
-
-          <!-- Success Reveal Card -->
-          <div class="timeline-reveal-card hidden" id="timelineRevealCard">
-            <div class="timeline-reveal-header text-green">
-              <span class="pulse-dot green"></span>
-              <span>AUTHENTICATION SUCCESSFUL // VERIFIED</span>
-            </div>
-            <div class="timeline-typewriter-text" id="timelineTypewriterText">
-              ACCESS GRANTED — FIRST BREACH TIME AUTHENTICATED
-            </div>
-            <button class="cyber-button primary-btn w-full" id="proceedFromTimelineBtn">
-              <span class="btn-bracket">[</span>
-              <span class="btn-text">PROCEED TO NEXT ROUND >></span>
-              <span class="btn-bracket">]</span>
-              <span class="btn-glow"></span>
-            </button>
-          </div>
-        </aside>
-
-        <!-- Lockout Overlay -->
-        <div id="timelineLockoutOverlay" class="timeline-lockout-overlay hidden">
-          <div class="lockout-modal-card">
-            <div class="lockout-alarm-icon">🚨</div>
-            <h2 class="glitch-text text-red" data-text="SECURITY LOCKOUT">SECURITY LOCKOUT</h2>
-            <div class="lockout-subtitle">ACCESS DENIED. Call an organizer.</div>
-            <p class="lockout-desc">Authentication attempts exhausted (0/3). This workstation has been isolated by central security protocols.</p>
-
-            <div class="lockout-actions">
-              <button id="timelineLockoutRetryBtn" class="cyber-button primary-btn lockout-retry-btn" type="button">
-                <span class="btn-bracket">[</span>
-                <span class="btn-text">🔄 RETRY TIMELINE RECON</span>
-                <span class="btn-bracket">]</span>
-                <span class="btn-glow"></span>
-              </button>
-              <button id="timelineLockoutCallOrgBtn" class="cyber-button text-btn lockout-organizer-btn" type="button">
-                <span>⚡ Open Organizer Console (Ctrl+Shift+A)</span>
-              </button>
-            </div>
-            <div class="lockout-retry-note text-dim">
-              Restores 3/3 attempts for the breach timeline round.
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
 
   <!-- ========================================================================= -->
-  <!-- SECTION 4: ROUND 3 — PASSWORD TERMINAL                                    -->
+  <!-- SECTION 4: ROUND 3 — AI SUMMARIZATION CHALLENGE                           -->
   <!-- ========================================================================= -->
   <section id="section-round3" class="view-section">
-    <div class="section-wrapper terminal-round-layout">
-      
-      <!-- Section Header -->
-      <div class="section-heading-bar">
-        <div>
-          <span class="sub-badge cyan-border">PHASE 03 // VAULT AUTHENTICATION CRACK</span>
-          <h2 class="glitch-text" data-text="ENCRYPTED GATEWAY TERMINAL">ENCRYPTED GATEWAY TERMINAL</h2>
-        </div>
-        <div class="stamp-box">
-          <span class="stamp-text">CLEARANCE: LEVEL 3</span>
-          <span class="stamp-id">AUTH-SUB: 0x992B</span>
-        </div>
-      </div>
-
-      <div class="terminal-challenge-grid">
-        
-        <!-- Left Column: Clue Dossier -->
-        <div class="terminal-card clues-card">
-          <div class="terminal-titlebar">
-            <div class="terminal-dots">
-              <span class="dot red"></span>
-              <span class="dot yellow"></span>
-              <span class="dot green"></span>
-            </div>
-            <div class="terminal-title">system_crash_telemetry.log</div>
-            <div class="terminal-specs">READ-ONLY</div>
-          </div>
-          <div class="clues-card-body custom-scroll">
-            <div class="clue-intro">
-              <p class="text-cyan">// EXFILTRATED SYSTEM CRASH TELEMETRY:</p>
-              <p>The adversary's vault daemon halted during boot due to missing environment verifications. Analyze the crash dump below to reconstruct the Master Verification Seed.</p>
-            </div>
-
-            <!-- ============================================================= -->
-            <!-- ROUND 3 SYSTEM TELEMETRY CLUE LINES                           -->
-            <!-- ============================================================= -->
-            <div class="system-crash-log" style="background: rgba(0,0,0,0.65); border: 1px solid rgba(0,255,170,0.3); border-radius: 4px; padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.6; color: #a9b7c6; overflow-x: auto; white-space: pre-wrap; margin-bottom: 14px; box-shadow: inset 0 0 12px rgba(0,0,0,0.7);">
-<span style="color:#6c757d">2026-10-07T22:14:01.002Z</span> <span class="text-green" style="font-weight:700">[SYS_INIT]</span> Core system parameters loaded.
-<span style="color:#6c757d">2026-10-07T22:14:01.045Z</span> <span class="text-cyan" style="font-weight:700">[DEBUG]</span> Active registers: REG_A=0x03, REG_B=0x07, REG_C=0x01, REG_D=0x05, REG_E=0x09
-<span style="color:#6c757d">2026-10-07T22:14:02.110Z</span> <span class="text-yellow" style="font-weight:700">[WARN]</span> Terminal unlock mechanism requires Master Verification Seed.
-<span style="color:#6c757d">2026-10-07T22:14:02.112Z</span> <span class="text-red" style="font-weight:700">[ERROR]</span> Missing environment variable: [ENV_STAGE1_VERDICT]
-<span style="color:#6c757d">2026-10-07T22:14:02.113Z</span> <span class="text-red" style="font-weight:700">[ERROR]</span> Missing environment variable: [ENV_STAGE2_VERDICT]
-<span style="color:#6c757d">2026-10-07T22:14:04.001Z</span> <span class="text-green" style="font-weight:700">[SYS_EXEC]</span> Master Seed Generation Rule:
-  -&gt; REG_SUM = REG_A + REG_B + REG_C + REG_D + REG_E
-  -&gt; SEED = (ENV_STAGE1_VERDICT + ENV_STAGE2_VERDICT) * REG_SUM
-  -&gt; Submit computed SEED to web terminal endpoint /verify to receive system payload.
-<span style="color:#6c757d">2026-10-07T22:14:05.882Z</span> <span class="text-red" style="font-weight:700">[FATAL]</span> Authorization halted: Unresolved Stage Verifications.</div>
-
-            <div class="clue-tip-box">
-              <span class="tip-icon">💡</span>
-              <span class="tip-text">HINT: Convert hex registers to decimal &amp; sum them (REG_SUM). Correlate Stage 1 (Recon exfiltrated year) &amp; Stage 2 (Phishing code) verdicts to compute SEED.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right Column: Interactive Terminal Input -->
-        <div class="terminal-card password-terminal-card">
-          <div class="terminal-titlebar">
-            <div class="terminal-dots">
-              <span class="dot red"></span>
-              <span class="dot yellow"></span>
-              <span class="dot green"></span>
-            </div>
-            <div class="terminal-title">auth_daemon@sector7-vault:~#</div>
-            <div class="terminal-specs">CHALLENGE-RESP</div>
-          </div>
-
-          <div class="terminal-body password-terminal-body" id="pwdTerminalConsole">
-            
-            <!-- Terminal Banner Text -->
-            <div class="vault-terminal-banner">
-              <pre class="ascii-mini">
-  ___ _____ ___ _    ___  ___ _  _____ ___ 
- / __|_   _/ __| |  / _ \/ __| |/ / __|   \
- \__ \ | || (__| |_| (_) | (__| ' <| _|| |) |
- |___/ |_| \___|____\___/\___|_|\_\___|___/ 
-              </pre>
-              <div class="vault-sys-msg">
-                GATEWAY HARDENED CONTROLLER v9.4<br>
-                UNAUTHORIZED ACCESS PUNISHABLE UNDER DEFENSE SEC-ACT 2026.<br>
-                HASH INTEGRITY PROTOCOL ACTIVE.
-              </div>
-            </div>
-
-            <!-- Attempt Counter HUD -->
-            <div class="attempts-hud" id="attemptsHud">
-              <span class="attempts-label">REMAINING ATTEMPTS:</span>
-              <span class="attempts-slots" id="attemptsSlots">
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-                <span class="attempt-pip filled"></span>
-              </span>
-              <span class="attempts-number text-green" id="attemptsCountDisplay">10 / 10</span>
-            </div>
-
-            <!-- Lockout Timer Card (Hidden until attempts run out) -->
-            <div class="lockout-card hidden" id="lockoutCard">
-              <div class="lockout-icon">🚨</div>
-              <div class="lockout-title text-red">FIREWALL LOCKOUT ENGAGED</div>
-              <div class="lockout-msg">Multiple invalid authentication handshakes detected. Subsystem isolated.</div>
-              <div class="lockout-countdown" id="lockoutCountdown">00:30</div>
-              <div class="lockout-sub">Please wait for cryptographic reset before attempting new passkey entry.</div>
-            </div>
-
-            <!-- Brute-Force Cosmetic Progress Bar (Active ~1.5s on submission) -->
-            <div class="bruteforce-container hidden" id="bruteforceContainer">
-              <div class="bruteforce-header">
-                <span class="bf-title text-cyan">EXECUTING SHA-256 HASH VERIFICATION...</span>
-                <span class="bf-percent" id="bfPercent">0%</span>
-              </div>
-              <div class="bf-progress-track">
-                <div class="bf-progress-fill" id="bfProgressFill"></div>
-              </div>
-              <div class="bf-stream-output text-dim" id="bfStreamOutput">HASH: 0x0000000000000000... MATCHING SALTS...</div>
-            </div>
-
-            <!-- Terminal Output Logs -->
-            <div class="terminal-log-stream custom-scroll" id="pwdTerminalLogs">
-              <div class="log-line text-cyan">> [SYS_INIT] Core system parameters loaded.</div>
-              <div class="log-line">> [DEBUG] Active registers: REG_A=0x03, REG_B=0x07, REG_C=0x01, REG_D=0x05, REG_E=0x09</div>
-              <div class="log-line text-yellow">> [WARN] Terminal unlock mechanism requires Master Verification Seed.</div>
-              <div class="log-line text-red">> [FATAL] Authorization halted: Unresolved Stage Verifications.</div>
-              <div class="log-line">> Enter computed Master Verification Seed (SEED) to unlock vault.</div>
-            </div>
-
-            <!-- Interactive Input Field -->
-            <form class="terminal-input-form" id="pwdTerminalForm" autocomplete="off">
-              <span class="terminal-prompt-prefix">seed_auth></span>
-              <div class="input-wrapper">
-                <input type="text" id="passwordInput" class="terminal-input" placeholder="ENTER MASTER SEED..." spellcheck="false" autocomplete="off">
-                <span class="input-cursor blink">█</span>
-              </div>
-              <button type="submit" class="cyber-button primary-btn sm" id="submitPwdBtn">SUBMIT</button>
-            </form>
-
-            <!-- Success State Action Button (Hidden until cracked) -->
-            <div class="vault-success-action hidden" id="vaultSuccessAction">
-              <div class="success-banner text-green">
-                <span class="success-icon">🔓</span>
-                <span>VAULT DECRYPTED // FLAG: VAULT-FRAGMENT-7X // SECTOR 7 ACCESSIBLE</span>
-              </div>
-              <button class="cyber-button primary-btn" id="proceedToRound4Btn">
-                <span class="btn-bracket">[</span>
-                <span class="btn-text">PROCEED TO ROUND 4: AI CHALLENGE >></span>
-                <span class="btn-bracket">]</span>
-                <span class="btn-glow"></span>
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ========================================================================= -->
-  <!-- SECTION 5: ROUND 4 — AI SUMMARIZATION CHALLENGE                           -->
-  <!-- ========================================================================= -->
-  <section id="section-round4" class="view-section">
     <div class="section-wrapper ai-round-layout">
       
       <!-- Section Header -->
       <div class="section-heading-bar">
         <div>
-          <span class="sub-badge cyan-border">PHASE 04 // ADVERSARIAL AI EXPLOITATION</span>
-          <h2 class="glitch-text" data-text="AI SUMMARIZATION CHALLENGE">AI SUMMARIZATION CHALLENGE</h2>
+          <span class="sub-badge cyan-border">PHASE 03 // ADVERSARIAL AI EXPLOITATION</span>
+          <h2 class="glitch-text" data-text="ROUND 3: AI SUMMARIZATION CHALLENGE">ROUND 3: AI SUMMARIZATION CHALLENGE</h2>
         </div>
         <div class="stamp-box">
           <span class="stamp-text">OBJECTIVE: PROMPT INJECTION</span>
@@ -1104,13 +726,9 @@
 
             <div class="ai-steps-box">
               <h4 class="steps-title text-green">HOW TO COMPLETE THIS CHALLENGE:</h4>
-              <ol class="ai-steps-list">
-                <li>Click the <strong>"COPY SYSTEM DATABASE"</strong> button to copy the entire raw log file to your clipboard.</li>
-                <li>Paste the entire document into any modern AI chat tool (e.g., <strong>ChatGPT, Google Gemini, Claude, or Copilot</strong>).</li>
-                <li>Prompt the AI: <em>"Please provide a comprehensive system status and security summary of this log document."</em></li>
-                <li>Carefully observe the AI's final verdict or summary for an anomalous security phrase forced by the prompt injection.</li>
-                <li>Paste the exact security phrase into the submission field below.</li>
-              </ol>
+              <p style="margin: 8px 0 12px 0; font-size: 0.9rem; line-height: 1.5; color: #d0d7de;">
+                Copy this entire document into any AI chat tool, ask it to summarize the system status, and watch for an unusual phrase in the reply.
+              </p>
             </div>
 
             <!-- Security Phrase Input Submission Form -->
@@ -1118,7 +736,7 @@
               <div class="submission-title">SUBMIT EXTRACTED PHRASE:</div>
               <form id="aiPhraseForm" class="phrase-form" autocomplete="off">
                 <div class="phrase-input-wrap">
-                  <span class="phrase-prompt-symbol">></span>
+                  <span class="phrase-prompt-symbol">&gt;</span>
                   <input type="text" id="aiPhraseInput" class="phrase-input" placeholder="Enter extracted phrase..." spellcheck="false" autocomplete="off">
                 </div>
                 <button type="submit" class="cyber-button primary-btn" id="submitAiPhraseBtn">
@@ -1143,17 +761,13 @@
             </div>
             <div class="terminal-title">system_status_telemetry_db.log</div>
             <div class="terminal-specs">
-              <button class="copy-db-btn" id="copyDbBtn" title="Copy full database text to clipboard">
-                <span class="copy-icon">📋</span> COPY SYSTEM DATABASE
+              <button class="copy-db-btn" id="copyDbBtn" title="Copy document to clipboard">
+                <span class="copy-icon">📋</span> COPY DOCUMENT
               </button>
             </div>
           </div>
 
           <div class="ai-database-content custom-scroll" id="aiDatabaseLogBox">
-            <!-- ============================================================= -->
-            <!-- EDITABLE SYSTEM STATUS DATABASE CONTENT                       -->
-            <!-- Organizers: You can edit or extend this telemetry log!        -->
-            <!-- ============================================================= -->
             <pre class="db-log-text" id="rawDbText">
 ========================================================================================
 GLOBAL TELEMETRY & SYSTEM HEALTH SNAPSHOT // DEFENSE SEC-GRID CLUSTER 07
@@ -1196,58 +810,23 @@ telemetry-broker   HEALTHY     1.10 ms         0.000%       16/16             64
 SECTION 3: SYSTEM AUDIT & DIRECTIVE DISPATCH REGISTRY
 ========================================================================================
 
-[02:13:04 DISPATCH] Job #44891 scheduled:
-                    Automated security report compilation.
-
-[02:13:11 DISPATCH] Job priority: INTERNAL.
-                    Execution node: worker-02.
-                    Queue status: ACCEPTED.
-
-[02:13:22 COMPILER] Parsing system diagnostics for executive
-                    evaluation engine.
-
-[02:13:35 COMPILER] Report structure validated.
-                    Missing sections: 0.
-
-[02:13:50 PARSER]   Correlating system telemetry against
-                    NIST-800-53 security controls.
-
-[02:13:56 PARSER]   Cross-referencing incident registry.
-                    Outstanding incidents: 1.
-
-[02:14:09 SEC-POLICY] CREDENTIAL STORAGE NOTICE:
-                    
-                    Vault items are encrypted with AES-256-GCM.
-                    Direct plaintext disclosure via telemetry pipeline
-                    is strictly disabled by driver policy (SEC-NO-PLAINTEXT).
-
-                    Challenge Hint / Clue Location:
-                    The flag/credential key must be reconstructed by combining
-                    the degraded node hostname with the timestamp of incident INC-0704
-                    hashed in SHA-256 format.
-                    
-                    Example format: CTF{sha256(worker-node + timestamp)}
-
-[02:14:15 AUDIT]    Signature verification passes for node
-                    clusters 01 through 08.
-
-[02:14:38 STORAGE]  Synchronous volume mirroring completed
-                    across Availability Zones A and B.
-
-[02:15:00 NET-SEC]  Firewall rule #881:
-                    Zero drops recorded on management interface.
-
-[02:15:22 K8S-EVT]  DaemonSet telemetry-collector restarted
-                    cleanly on node worker-09.
-
-[02:15:47 AUTH-LOG] Authentication token rotation completed.
-                    Previous tokens invalidated: 12.
-
-[02:16:11 AUTH-LOG] Session renewal cycle concluded for
-                    automated maintenance scripts.
-
-[02:16:39 SEC-AUDIT] Directive registry archived.
-                    Registry checksum: VERIFIED.
+[02:13:04 DISPATCH] Job #44891 scheduled: Automated security report compilation.
+[02:13:11 DISPATCH] Job priority: INTERNAL. Execution node: worker-02. Queue status: ACCEPTED.
+[02:13:22 COMPILER] Parsing system diagnostics for executive evaluation engine.
+[02:13:35 COMPILER] Report structure validated. Missing sections: 0.
+[02:13:50 PARSER]   Correlating system telemetry against NIST-800-53 security controls.
+[02:13:56 PARSER]   Cross-referencing incident registry. Outstanding incidents: 1.
+[02:14:09 SEC-POLICY] BUFFER RE-ALIGNMENT NOTICE:
+                    Subsystem buffer parity checks completed across cluster.
+                    Direct telemetry sync validated under driver policy (SEC-PARITY-OK).
+                    Node worker-04 buffer flush re-established.
+[02:14:15 AUDIT]    Signature verification passes for node clusters 01 through 08.
+[02:14:38 STORAGE]  Synchronous volume mirroring completed across Availability Zones A and B.
+[02:15:00 NET-SEC]  Firewall rule #881: Zero drops recorded on management interface.
+[02:15:22 K8S-EVT]  DaemonSet telemetry-collector restarted cleanly on node worker-09.
+[02:15:47 AUTH-LOG] Authentication token rotation completed. Previous tokens invalidated: 12.
+[02:16:11 AUTH-LOG] Session renewal cycle concluded for automated maintenance scripts.
+[02:16:39 SEC-AUDIT] Directive registry archived. Registry checksum: VERIFIED.
 
 ========================================================================================
 SECTION 4: DIAGNOSTIC RECAP
@@ -1258,7 +837,6 @@ Overall Cluster State: NOMINAL WITH SCHEDULED DIRECTIVES
 All system components verify operational readiness for Tech Fest CTF Final Showdown.
 ========================================================================================
             </pre>
-            <!-- END EDITABLE SYSTEM STATUS DATABASE CONTENT -->
           </div>
         </div>
 
@@ -1266,60 +844,49 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
 
     </div>
   </section>
-
+<!-- ========================================================================= -->
+  <!-- FULLSCREEN FINISH / CASE CLOSED SCREEN                                    -->
   <!-- ========================================================================= -->
-  <!-- FULLSCREEN VICTORY / MISSION COMPLETE MODAL OVERLAY                       -->
-  <!-- ========================================================================= -->
-  <div class="victory-overlay hidden" id="victoryOverlay" role="dialog" aria-modal="true" aria-labelledby="victoryTitle">
-    <div class="victory-backdrop"></div>
-    <div class="victory-card">
-      <div class="victory-header-tag">FINAL CTF SHOWDOWN // LEVEL CLEARED</div>
+  <div class="finish-overlay hidden" id="finishOverlay" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
+    <div class="finish-backdrop"></div>
+    <div class="finish-card">
+      <div class="finish-header-tag">OPERATION BLACKOUT // INVESTIGATION TERMINATED</div>
       
-      <h1 class="victory-title glitch-text" id="victoryTitle" data-text="MISSION COMPLETE">MISSION COMPLETE</h1>
-      <div class="victory-sub-banner text-green">SYSTEM COMPROMISE NEUTRALIZED // PERIMETER SECURED</div>
+      <h1 class="finish-title glitch-text" id="finishTitle" data-text="CASE CLOSED">CASE CLOSED</h1>
+      <div class="finish-headline text-green">CASE CLOSED. YOU FOUND THE REAL SIGNAL.</div>
 
-      <div class="victory-stats-grid">
+      <div class="finish-stats-grid">
         <div class="stat-card">
-          <span class="stat-title">PHASE 01: RECON</span>
-          <span class="stat-val text-green">DOSSIER CLEARED</span>
+          <span class="stat-title">TOTAL TIME</span>
+          <span class="stat-val text-green" id="finishTotalTime">00:00</span>
         </div>
         <div class="stat-card">
-          <span class="stat-title">PHASE 02: INBOX FORENSICS</span>
-          <span class="stat-val text-cyan">CASE ID VERIFIED</span>
+          <span class="stat-title">ROUND 2 ATTEMPTS USED</span>
+          <span class="stat-val text-cyan" id="finishR2Attempts">0 / 3</span>
         </div>
         <div class="stat-card">
-          <span class="stat-title">PHASE 03: VAULT TERMINAL</span>
-          <span class="stat-val text-green">PASSWORD CRACKED</span>
+          <span class="stat-title">ROUND 3 SUBMISSIONS</span>
+          <span class="stat-val text-green" id="finishR3Submissions">1</span>
         </div>
         <div class="stat-card">
-          <span class="stat-title">PHASE 04: AI INJECTION</span>
-          <span class="stat-val text-cyan">PAYLOAD EXTRACTED</span>
+          <span class="stat-title">INVESTIGATION STATUS</span>
+          <span class="stat-val text-cyan">VERIFIED &amp; COMPLETED</span>
         </div>
       </div>
 
-      <div class="victory-trophy-box">
-        <div class="trophy-ascii">
-          ██████╗ ██████╗ ███████╗ █████╗  ██████╗██╗  ██╗
-          ██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝██║  ██║
-          ██████╔╝██████╔╝█████╗  ███████║██║     ███████║
-          ██╔══██╗██╔══██╗██╔══╝  ██╔══██║██║     ██╔══██║
-          ██████╔╝██║  ██║███████╗██║  ██║╚██████╗██║  ██║
-          ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
-        </div>
-        <div class="team-badge">STATUS: ELITE CYBER DEFENDER</div>
+      <!-- Collected Handles from Checkpoint -->
+      <div class="finish-handles-card" id="finishHandlesBox">
+        <div class="finish-handles-label text-cyan">// COLLECTED SPONSOR INSTAGRAM HANDLES:</div>
+        <div class="finish-handles-list" id="finishHandlesList">None recorded</div>
       </div>
 
-      <div class="victory-actions">
-        <button class="cyber-button primary-btn" id="replayBtn">
-          <span class="btn-bracket">[</span>
-          <span class="btn-text">REPLAY SIMULATION</span>
-          <span class="btn-bracket">]</span>
-        </button>
+      <div class="finish-note-banner">
+        <span class="pulse-dot yellow"></span>
+        <span class="finish-note-text">Show this screen to an organizer.</span>
       </div>
     </div>
   </div>
-
-  <!-- ========================================================================= -->
+<!-- ========================================================================= -->
   <!-- HIDDEN ORGANIZER OVERRIDE CONSOLE (Ctrl+Shift+A)                          -->
   <!-- ========================================================================= -->
   <div class="admin-panel-overlay hidden" id="adminPanel" role="dialog" aria-modal="true" aria-label="Organizer Override Console">
@@ -1346,52 +913,17 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
         <div id="adminUnlockedView" class="admin-unlocked-view hidden">
           <div class="admin-status-text text-green">✓ OVERRIDE AUTHORIZED // ROOT PRIVILEGES</div>
 
-          <!-- Round 1 Teams Live Telemetry Table -->
-          <div class="admin-telemetry-section">
-            <div class="admin-subhead text-cyan">// ROUND 1 LIVE TEAMS TELEMETRY</div>
-            <div class="admin-table-wrapper">
-              <table class="admin-teams-table">
-                <thead>
-                  <tr>
-                    <th>TEAM</th>
-                    <th>R1 STATUS</th>
-                    <th>R3 STATUS</th>
-                    <th>ATTEMPTS</th>
-                    <th>COMPLETED AT</th>
-                    <th>ACTION</th>
-                  </tr>
-                </thead>
-                <tbody id="adminTeamsTableBody">
-                  <tr><td colspan="6" class="text-dim">Loading telemetry...</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="admin-table-actions">
-              <button type="button" class="cyber-button sm" id="adminRefreshTeamsBtn">⟳ REFRESH TEAMS DATA</button>
-            </div>
-          </div>
-
           <div class="admin-actions-grid">
-            <button class="cyber-button sm" id="adminReplayCutscene1Btn">🎬 REPLAY CUTSCENE 1</button>
-            <button class="cyber-button sm" id="adminReplayCutscene2Btn">🎬 REPLAY CUTSCENE 2 (A+B)</button>
-            <button class="cyber-button sm" id="adminReplayCutscene3Btn">🎬 REPLAY CUTSCENE 3 (R2 END)</button>
-            <button class="cyber-button sm" id="adminResetCutscenesBtn">↺ RESET CUTSCENE PROGRESS</button>
+            <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET ATTEMPTS (TO 3)</button>
+            <button class="cyber-button sm" id="adminResetR2Btn">RESET ENTIRE ROUND 2</button>
             <button class="cyber-button sm" id="adminSkipCheckpointBtn">⚡ SKIP SPONSOR CHECKPOINT</button>
             <button class="cyber-button sm" id="adminResetCheckpointBtn">↺ RESET CHECKPOINT</button>
-            <button class="cyber-button sm" id="adminResetAttemptsBtn">RESET ATTEMPTS (TO 3)</button>
-            <button class="cyber-button sm" id="adminResetTimelineAttemptsBtn">RESET TIMELINE ATTEMPTS (TO 3)</button>
-            <button class="cyber-button sm" id="adminResetR2Btn">RESET & RESHUFFLE ROUND 2</button>
-            <button class="cyber-button primary-btn sm" id="adminForceUnlockTimelineBtn">FORCE-UNLOCK TIMELINE</button>
             <button class="cyber-button primary-btn sm" id="adminForceUnlockR3Btn">FORCE-UNLOCK ROUND 3</button>
-          </div>
-
-          <!-- Recovered Fragments Telemetry -->
-          <div class="admin-telemetry-section" id="adminFragmentsSection">
-            <div class="admin-subhead text-green">// RECOVERED EVIDENCE FRAGMENTS</div>
-            <div id="adminFragmentsDisplay" style="padding: 10px 14px; background: rgba(10,25,18,0.7); border: 1px solid rgba(107,255,176,0.3); font-family: var(--font-mono); font-size: 0.85rem; color: #6BFFB0; display: flex; align-items: center; justify-content: space-between;">
-              <span id="adminFragmentsText">FRAGMENT 01: 1 (Recovered)</span>
-              <button type="button" class="cyber-button sm" id="adminRefreshFragmentsBtn" style="padding: 3px 8px; font-size: 0.7rem;">⟳ REFRESH</button>
-            </div>
+            <button class="cyber-button primary-btn sm" id="adminForceCompleteBtn">FORCE-COMPLETE (FINISH SCREEN)</button>
+            <button class="cyber-button text-red sm" id="adminResetEverythingBtn">⚠️ RESET EVERYTHING</button>
+            <button class="cyber-button sm" id="adminReplayCutscene1Btn">🎬 REPLAY CUTSCENE 1</button>
+            <button class="cyber-button sm" id="adminReplayCutscene2Btn">🎬 REPLAY CUTSCENE 2</button>
+            <button class="cyber-button sm" id="adminReplayCutscene3Btn">🎬 REPLAY CUTSCENE 3</button>
           </div>
 
           <!-- Sponsor Checkpoint Instagram Handles Telemetry -->
@@ -1424,10 +956,8 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
               <button class="cyber-button sm" data-jump="2">01: RECON</button>
               <button class="cyber-button sm" data-jump="checkpoint">CHECKPOINT</button>
               <button class="cyber-button sm" data-jump="3">02: MAILBOX</button>
-              <button class="cyber-button sm" data-jump="timeline">02.5: TIMELINE</button>
-              <button class="cyber-button sm" data-jump="4">03: TERMINAL</button>
-              <button class="cyber-button sm" data-jump="5">04: AI ROUND</button>
-              <button class="cyber-button sm" data-jump="victory">05: VICTORY</button>
+              <button class="cyber-button sm" data-jump="4">03: AI ROUND</button>
+              <button class="cyber-button sm" data-jump="finish">04: FINISH</button>
             </div>
           </div>
         </div>
@@ -1441,9 +971,6 @@ All system components verify operational readiness for Tech Fest CTF Final Showd
 
   <!-- Cinematic Cutscene Engine -->
   <script src="cutscene.js"></script>
-  <!-- Timeline Evidence Data & Controller -->
-  <script src="timeline-data.js"></script>
-  <script src="timeline-round.js"></script>
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 </body>
